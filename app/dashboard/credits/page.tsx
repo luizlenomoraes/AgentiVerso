@@ -7,7 +7,6 @@ import { ArrowLeft } from "lucide-react"
 import { CreditsPackages } from "./credits-packages" // Importe o componente novo
 
 export default async function CreditsPage() {
-  // Agora isso funciona porque o arquivo é um Server Component (sem "use client")
   const supabase = await getSupabaseServerClient()
 
   const {
@@ -52,7 +51,7 @@ export default async function CreditsPage() {
             </p>
           </div>
 
-          {/* Componente Client com a interatividade */}
+          {/* Aqui entra o componente Client que criamos acima */}
           <CreditsPackages />
 
           <Card className="p-6 bg-card/50 backdrop-blur border-border/50">
