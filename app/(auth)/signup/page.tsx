@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
@@ -24,6 +23,8 @@ export default function SignupPage() {
     setLoading(true)
     setError("")
 
+    // O registro envia o full_name nos meta_data.
+    // O Trigger no banco de dados deve usar isso para criar o perfil na tabela 'profiles'.
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -39,18 +40,9 @@ export default function SignupPage() {
       setError(signUpError.message)
       setLoading(false)
     } else if (data.user) {
-      // Create profile
-      const { error: profileError } = await supabase.from("profiles").insert({
-        id: data.user.id,
-        full_name: fullName,
-        total_credits: 20,
-        used_credits: 0,
-      })
-
-      if (profileError) {
-        console.error("[v0] Error creating profile:", profileError)
-      }
-
+      // Sucesso! A criação do perfil e atribuição de créditos (20) 
+      // agora é feita automaticamente pelo Trigger do PostgreSQL para segurança.
+      
       setSuccess(true)
       setTimeout(() => {
         router.push("/dashboard")
