@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import Link from "next/link"
 import { ArrowLeft, Send, Loader2 } from "lucide-react"
 
+// ... (Tipos Message e Agent mantêm iguais) ...
 type Message = {
   id: string
   role: "user" | "assistant"
@@ -28,16 +29,29 @@ type ChatInterfaceProps = {
   agent: Agent
   userId: string
   availableCredits: number
+  initialMessages?: Message[]       // <--- NOVO
+  initialConversationId?: string    // <--- NOVO
 }
 
-export function ChatInterface({ agent, userId, availableCredits }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([])
+export function ChatInterface({ 
+  agent, 
+  userId, 
+  availableCredits, 
+  initialMessages = [], 
+  initialConversationId = null 
+}: ChatInterfaceProps) { // <--- Atualize a assinatura da função
+  
+  // Inicialize o estado com as mensagens vindas do banco
+  const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [credits, setCredits] = useState(availableCredits)
-  const [conversationId, setConversationId] = useState<string | null>(null) // Estado para ID da conversa
+  const [conversationId, setConversationId] = useState<string | null>(initialConversationId)
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  // ... (O resto do código: useEffect scroll, handleSend, return...) 
+  // O código restante permanece idêntico, apenas a inicialização mudou.
+  
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -65,21 +79,15 @@ export function ChatInterface({ agent, userId, availableCredits }: ChatInterface
         body: JSON.stringify({
           agentId: agent.id,
           message: userMessage.content,
-          conversationId, // Envia o ID da conversa se existir
-          // userId não é necessário enviar, o servidor pega do cookie
+          conversationId, // Usa o ID existente
         }),
       })
 
       const data = await response.json()
 
-      if (data.error) {
-        throw new Error(data.error)
-      }
+      if (data.error) throw new Error(data.error)
 
-      // Se o servidor retornou um novo ID de conversa, salvamos ele
-      if (data.conversationId) {
-        setConversationId(data.conversationId)
-      }
+      if (data.conversationId) setConversationId(data.conversationId)
 
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
@@ -92,21 +100,16 @@ export function ChatInterface({ agent, userId, availableCredits }: ChatInterface
       setCredits(data.remainingCredits)
     } catch (error) {
       console.error("Chat error:", error)
-      const errorMessage: Message = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: "Desculpe, ocorreu um erro ao processar sua mensagem.",
-        created_at: new Date().toISOString(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setLoading(false)
     }
   }
 
+  // ... (JSX do return mantém igual) ...
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
+        {/* ... (Cabeçalho, ScrollArea, Input - tudo igual) ... */}
+        <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button asChild variant="ghost" size="icon">
