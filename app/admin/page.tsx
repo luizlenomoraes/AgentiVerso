@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Plus, Users, Bot, Settings, Loader2 } from "lucide-react"
+import { ArrowLeft, Plus, Users, Bot, Settings, Loader2, CreditCard } from "lucide-react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { AgentActions, UserActions } from "@/components/admin/admin-actions"
 
