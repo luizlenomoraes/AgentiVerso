@@ -16,13 +16,13 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-  const supabase = getSupabaseBrowserClient()
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
 
+    const supabase = getSupabaseBrowserClient()
     // O registro envia o full_name nos meta_data.
     // O Trigger no banco de dados deve usar isso para criar o perfil na tabela 'profiles'.
     const { data, error: signUpError } = await supabase.auth.signUp({
@@ -42,7 +42,7 @@ export default function SignupPage() {
     } else if (data.user) {
       // Sucesso! A criação do perfil e atribuição de créditos (20) 
       // agora é feita automaticamente pelo Trigger do PostgreSQL para segurança.
-      
+
       setSuccess(true)
       setTimeout(() => {
         router.push("/dashboard")
