@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -10,16 +9,30 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
 import { ArrowLeft } from "lucide-react"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 
 export default function NewAgentPage() {
   const router = useRouter()
+  const supabase = getSupabaseBrowserClient()
   const [loading, setLoading] = useState(false)
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
+  
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     photo_url: "",
     system_prompt: "",
+    category_id: "", // Novo campo
   })
+
+  // Buscar categorias ao carregar a página
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase.from("categories").select("id, name").order("name")
+      if (data) setCategories(data)
+    }
+    fetchCategories()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,10 +48,11 @@ export default function NewAgentPage() {
       if (response.ok) {
         router.push("/admin")
       } else {
-        alert("Erro ao criar agente")
+        const error = await response.json()
+        alert(error.error || "Erro ao criar agente")
       }
     } catch (error) {
-      console.error("[v0] Error creating agent:", error)
+      console.error("Error creating agent:", error)
       alert("Erro ao criar agente")
     } finally {
       setLoading(false)
@@ -75,6 +89,26 @@ export default function NewAgentPage() {
                 required
                 className="bg-background/50 border-border/50"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="category" className="text-sm font-medium">
+                Categoria
+              </label>
+              <select
+                id="category"
+                value={formData.category_id}
+                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                required
+                className="w-full flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Selecione uma categoria...</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
