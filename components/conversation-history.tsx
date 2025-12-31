@@ -3,6 +3,9 @@
 import { MessageSquare, Clock, Trash2, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 
 type Conversation = {
   id: string

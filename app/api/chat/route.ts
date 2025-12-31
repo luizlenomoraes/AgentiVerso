@@ -1,11 +1,11 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import OpenAI from "openai"
+import { GoogleGenerativeAI } from "@google/generative-ai"
 
 export async function POST(request: Request) {
   try {
     const supabase = await getSupabaseServerClient()
-    
+
     // 1. SEGURANÇA: Autenticação
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -13,23 +13,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    // --- LÓGICA DE CHAVE DINÂMICA ---
-    // Tentar buscar a chave no banco de dados
-    const { data: dbKey } = await supabase
-      .from("app_settings")
-      .select("value")
-      .eq("key", "openai_api_key")
-      .single()
-
-    // Usar chave do banco OU variável de ambiente
-    const apiKey = dbKey?.value || process.env.OPENAI_API_KEY
-
+    // Chave Gemini
+    const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey) {
-      return NextResponse.json({ error: "Chave da API OpenAI não configurada no Admin." }, { status: 500 })
+      return NextResponse.json({ error: "Chave Gemini não configurada" }, { status: 500 })
     }
 
-    const openai = new OpenAI({ apiKey })
-    // ---------------------------------
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
 
     const userId = user.id
     const { agentId, message, conversationId } = await request.json()
@@ -47,103 +38,86 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Agente não encontrado" }, { status: 404 })
     }
 
-    // 2. RAG: Busca Vetorial de Conhecimento
-    let contextText = ""
-    
-    try {
-      // Gerar embedding da pergunta do usuário
-      const embeddingResponse = await openai.embeddings.create({
-        model: "text-embedding-3-small",
-        input: message.replace(/\n/g, " "),
-      })
-      const embedding = embeddingResponse.data[0].embedding
-
-      // Buscar no Supabase (usando a função RPC)
-      const { data: documents } = await supabase.rpc("match_knowledge", {
-        query_embedding: embedding,
-        match_threshold: 0.5,
-        match_count: 5,
-        p_agent_id: agentId,
-      })
-
-      if (documents && documents.length > 0) {
-        contextText = documents.map((doc: any) => doc.content).join("\n---\n")
-      }
-    } catch (err) {
-      console.error("Erro no processo de embedding/busca:", err)
-      // Segue sem contexto se falhar
-    }
-
-    // 3. IA: Geração da Resposta
-    const systemMessage = `
+    // Prompt do sistema
+    const systemPrompt = `
     Você é ${agent.name}.
     Descrição: ${agent.description}
-    Diretrizes de Comportamento: ${agent.system_prompt}
+    Diretrizes: ${agent.system_prompt}
     
-    Base de Conhecimento (Contexto):
-    ${contextText ? contextText : "Nenhuma informação extra disponível no momento."}
-    
-    Instruções:
-    - Use o contexto acima para responder se for relevante.
-    - Se a resposta não estiver no contexto, use seu conhecimento geral, mas mantenha a persona.
-    - Responda no idioma do usuário.
+    Responda no idioma do usuário e mantenha a persona.
     `
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: message },
+    // Gerar resposta com Gemini
+    const chat = model.startChat({
+      history: [
+        {
+          role: "user",
+          parts: [{ text: systemPrompt }],
+        },
+        {
+          role: "model",
+          parts: [{ text: "Entendido! Estou pronto para ajudar." }],
+        },
       ],
-      temperature: 0.7,
     })
 
-    const aiResponse = completion.choices[0].message.content || "Desculpe, não consegui processar sua resposta."
+    const result = await chat.sendMessage(message)
+    const response = await result.response
+    const botReply = response.text()
 
-    // 4. PERSISTÊNCIA E COBRANÇA
+    // Gerenciar conversa
     let currentConversationId = conversationId
 
-    // Criar conversa se não existir
     if (!currentConversationId) {
-      const { data: newConv, error: convError } = await supabase
+      const { data: newConv } = await supabase
         .from("conversations")
         .insert({
           user_id: userId,
           agent_id: agentId,
-          title: message.substring(0, 30) + "...",
+          title: message.substring(0, 50) + "...",
         })
         .select()
         .single()
 
-      if (convError) throw convError
-      currentConversationId = newConv.id
+      currentConversationId = newConv?.id
     }
 
     // Salvar mensagens
     await supabase.from("messages").insert([
-      { conversation_id: currentConversationId, user_id: userId, role: "user", content: message },
-      { conversation_id: currentConversationId, role: "assistant", content: aiResponse }
+      {
+        conversation_id: currentConversationId,
+        user_id: userId,
+        role: "user",
+        content: message,
+      },
+      {
+        conversation_id: currentConversationId,
+        user_id: userId,
+        role: "assistant",
+        content: botReply,
+      },
     ])
 
     // Atualizar créditos e logs
-    await supabase.from("profiles").update({ used_credits: profile.used_credits + 1 }).eq("id", userId)
+    await supabase
+      .from("profiles")
+      .update({ used_credits: (profile?.used_credits || 0) + 1 })
+      .eq("id", userId)
 
     await supabase.from("usage_logs").insert({
       user_id: userId,
       agent_id: agentId,
       user_query: message,
-      bot_response: aiResponse,
-      tokens_used: completion.usage?.total_tokens || 0,
+      bot_response: botReply,
+      tokens_used: Math.ceil(botReply.length / 4),
     })
 
     return NextResponse.json({
-      response: aiResponse,
+      reply: botReply,
       conversationId: currentConversationId,
-      remainingCredits: availableCredits - 1,
     })
-
-  } catch (error) {
-    console.error("Chat API error:", error)
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
+  } catch (error: any) {
+    console.error("Erro no chat:", error)
+    return NextResponse.json({ error: error.message || "Erro interno" }, { status: 500 })
   }
 }

@@ -2,13 +2,13 @@ import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ChatInterface } from "@/components/chat-interface"
 
-export default async function ChatPage({
-  params,
-  searchParams
-}: {
-  params: { agentId: string },
-  searchParams: { conversation?: string }
+export default async function ChatPage(props: {
+  params: Promise<{ agentId: string }>,
+  searchParams: Promise<{ conversation?: string }>
 }) {
+  const params = await props.params
+  const searchParams = await props.searchParams
+
   const supabase = await getSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -61,8 +61,8 @@ export default async function ChatPage({
       agent={agent}
       userId={user.id}
       availableCredits={availableCredits}
-      initialMessages={initialMessages}        // Passa o histórico
-      initialConversationId={conversation?.id} // Passa o ID para continuar a mesma conversa
+      initialMessages={initialMessages}
+      initialConversationId={targetConversationId}
     />
   )
 }
