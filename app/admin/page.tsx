@@ -71,7 +71,6 @@ export default function AdminPage() {
       const { data: usersData } = await supabase
         .from("profiles")
         .select("*")
-        .order("created_at", { ascending: false })
 
       if (usersData) setUsers(usersData)
 
