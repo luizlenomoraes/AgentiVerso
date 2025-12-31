@@ -130,7 +130,7 @@ export function CreditStats({ profile, usageLogs, availableCredits }: CreditStat
                   })}
                 </span>
               </div>
-              <span className="text-sm font-medium">-{log.tokens_used} crédito</span>
+              <span className="text-sm font-medium">-1 crédito</span>
             </div>
           ))}
           {usageLogs.length === 0 && (

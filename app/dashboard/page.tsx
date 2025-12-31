@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   // Get user's conversations
   const { data: conversations } = await supabase
     .from("conversations")
-    .select("*, agents(name, photo_url)")
+    .select("*, agent_id, agents(name, photo_url)")
     .eq("user_id", user.id)
     .order("updated_at", { ascending: false })
     .limit(10)
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
             AgentiVerso
           </Link>
           <div className="flex items-center gap-4">
-            
+
             {/* === NOVO: Botão Exclusivo para Admins === */}
             {profile?.is_admin && (
               <Button asChild variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">

@@ -1,174 +1,238 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, Loader2, UserCheck } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ArrowLeft, Plus, Users, Bot, Settings, Loader2 } from "lucide-react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import { AgentActions, UserActions } from "@/components/admin/admin-actions"
 
-export default function EditUserPage() {
+type Agent = {
+  id: string
+  name: string
+  description: string
+  photo_url: string | null
+  is_public: boolean
+  categories: { name: string } | null
+}
+
+type Profile = {
+  id: string
+  full_name: string | null
+  total_credits: number
+  used_credits: number
+  is_admin: boolean
+}
+
+export default function AdminPage() {
   const router = useRouter()
-  const params = useParams()
-  const userId = params.id as string
-
   const supabase = getSupabaseBrowserClient()
-  const [loading, setLoading] = useState(false)
-  const [fetching, setFetching] = useState(true)
-  
-  const [formData, setFormData] = useState({
-    full_name: "",
-    total_credits: 0,
-    is_admin: false,
-    email: "" // Apenas visualização
-  })
+  const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [agents, setAgents] = useState<Agent[]>([])
+  const [users, setUsers] = useState<Profile[]>([])
 
-  // Buscar dados do usuário
   useEffect(() => {
-    const fetchUser = async () => {
-      // Buscar perfil
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single()
+    const checkAdminAndFetchData = async () => {
+      // Verificar se o usuário está logado e é admin
+      const { data: { user } } = await supabase.auth.getUser()
 
-      if (error) {
-        alert("Erro ao buscar usuário ou usuário não encontrado.")
-        router.push("/admin")
+      if (!user) {
+        router.push("/login")
         return
       }
-      
-      setFormData({
-        full_name: profile.full_name || "",
-        total_credits: profile.total_credits || 0,
-        is_admin: profile.is_admin || false,
-        email: userId // Usaremos o ID como referência visual
-      })
-      
-      setFetching(false)
-    }
-    fetchUser()
-  }, [userId])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    try {
-      const { error } = await supabase
+      const { data: profile } = await supabase
         .from("profiles")
-        .update({
-          full_name: formData.full_name,
-          total_credits: Number(formData.total_credits),
-          is_admin: formData.is_admin
-        })
-        .eq("id", userId)
+        .select("is_admin")
+        .eq("id", user.id)
+        .single()
 
-      if (error) throw error
+      if (!profile?.is_admin) {
+        router.push("/dashboard")
+        return
+      }
 
-      alert("Usuário atualizado com sucesso!")
-      router.push("/admin")
-      router.refresh()
-    } catch (error: any) {
-      console.error("Erro ao atualizar:", error)
-      alert("Erro ao atualizar: " + error.message)
-    } finally {
+      setIsAdmin(true)
+
+      // Buscar agentes
+      const { data: agentsData } = await supabase
+        .from("agents")
+        .select("*, categories(name)")
+        .order("created_at", { ascending: false })
+
+      if (agentsData) setAgents(agentsData)
+
+      // Buscar usuários
+      const { data: usersData } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false })
+
+      if (usersData) setUsers(usersData)
+
       setLoading(false)
     }
+
+    checkAdminAndFetchData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
-  if (fetching) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>
+  if (!isAdmin) {
+    return null
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Button asChild variant="ghost" size="icon">
-            <Link href="/admin">
-              <ArrowLeft className="w-5 h-5" />
+      <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button asChild variant="ghost" size="icon">
+              <Link href="/dashboard">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+              Painel Admin
+            </h1>
+          </div>
+          <Button asChild variant="outline" className="bg-transparent">
+            <Link href="/admin/settings">
+              <Settings className="w-4 h-4 mr-2" />
+              Configurações
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold">Editar Usuário</h1>
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <Card className="max-w-xl mx-auto p-8 bg-card/50 backdrop-blur border-border/50">
-          <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border/50">
-            <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-2xl">
-              <UserCheck className="w-8 h-8 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">{formData.full_name}</h2>
-              <p className="text-xs text-muted-foreground font-mono">ID: {formData.email}</p>
-            </div>
-          </div>
+        <Tabs defaultValue="agents" className="space-y-6">
+          <TabsList className="bg-card/50 backdrop-blur border border-border/50">
+            <TabsTrigger value="agents" className="flex items-center gap-2">
+              <Bot className="w-4 h-4" />
+              Agentes
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Usuários
+            </TabsTrigger>
+          </TabsList>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Nome Completo</label>
-              <Input
-                value={formData.full_name}
-                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                required
-                className="bg-background/50"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Créditos Totais</label>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  value={formData.total_credits}
-                  onChange={(e) => setFormData({ ...formData, total_credits: Number(e.target.value) })}
-                  required
-                  className="bg-background/50"
-                />
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setFormData(prev => ({ ...prev, total_credits: prev.total_credits + 10 }))}
-                >
-                  +10
-                </Button>
+          <TabsContent value="agents" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Gerenciar Agentes</h2>
+                <p className="text-muted-foreground">Crie e gerencie agentes de IA</p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Use este campo para bonificar o usuário manualmente.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-background/30">
-              <div className="space-y-0.5">
-                <label className="text-base font-medium">Acesso de Administrador</label>
-                <p className="text-xs text-muted-foreground">
-                  Permite acesso total ao painel admin e edição de agentes.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                 <input 
-                    type="checkbox" 
-                    checked={formData.is_admin}
-                    onChange={(e) => setFormData({ ...formData, is_admin: e.target.checked })}
-                    className="w-5 h-5 accent-primary"
-                 />
-                 <span className="text-sm">{formData.is_admin ? "Sim" : "Não"}</span>
-              </div>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90">
-                {loading ? "Salvando..." : "Salvar Alterações"}
+              <Button asChild className="bg-gradient-to-r from-primary to-accent hover:opacity-90">
+                <Link href="/admin/agents/new">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Agente
+                </Link>
               </Button>
             </div>
-          </form>
-        </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {agents.map((agent) => (
+                <Card
+                  key={agent.id}
+                  className="p-6 space-y-4 bg-card/50 backdrop-blur border-border/50"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-2xl flex-shrink-0">
+                      {agent.photo_url || "🤖"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg truncate">{agent.name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        {agent.categories && (
+                          <Badge variant="secondary" className="text-xs">
+                            {agent.categories.name}
+                          </Badge>
+                        )}
+                        <Badge variant={agent.is_public ? "default" : "outline"} className="text-xs">
+                          {agent.is_public ? "Público" : "Privado"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{agent.description}</p>
+                  <AgentActions agentId={agent.id} />
+                </Card>
+              ))}
+
+              {agents.length === 0 && (
+                <div className="col-span-full text-center py-12">
+                  <Bot className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">Nenhum agente cadastrado ainda.</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold">Gerenciar Usuários</h2>
+              <p className="text-muted-foreground">Veja e edite usuários da plataforma</p>
+            </div>
+
+            <Card className="bg-card/50 backdrop-blur border-border/50 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted/30">
+                    <tr>
+                      <th className="text-left p-4 font-medium">Usuário</th>
+                      <th className="text-left p-4 font-medium">Créditos</th>
+                      <th className="text-left p-4 font-medium">Status</th>
+                      <th className="text-right p-4 font-medium">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => (
+                      <tr key={user.id} className="border-t border-border/50">
+                        <td className="p-4">
+                          <div>
+                            <p className="font-medium">{user.full_name || "Sem nome"}</p>
+                            <p className="text-xs text-muted-foreground font-mono truncate max-w-[200px]">
+                              {user.id}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className="font-semibold text-primary">
+                            {user.total_credits - user.used_credits}
+                          </span>
+                          <span className="text-muted-foreground text-sm"> / {user.total_credits}</span>
+                        </td>
+                        <td className="p-4">
+                          {user.is_admin ? (
+                            <Badge className="bg-primary/20 text-primary border-primary/30">Admin</Badge>
+                          ) : (
+                            <Badge variant="secondary">Usuário</Badge>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <UserActions userId={user.id} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   )

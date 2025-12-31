@@ -10,6 +10,7 @@ type Conversation = {
   title: string
   created_at: string
   updated_at: string
+  agent_id: string
   agents: {
     name: string
     photo_url: string | null
@@ -59,7 +60,7 @@ export function ConversationHistory({ conversations }: ConversationHistoryProps)
               </div>
 
               <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href={`/chat/${conversation.agents?.photo_url || ""}?conversation=${conversation.id}`}>
+                <Link href={`/chat/${conversation.agent_id}?conversation=${conversation.id}`}>
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Continuar Conversa
                 </Link>
