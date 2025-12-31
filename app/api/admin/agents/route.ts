@@ -13,14 +13,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    // Check if user is admin
+    // Verifica se é admin
     const { data: profile } = await supabase.from("profiles").select("is_admin").eq("id", user.id).single()
 
     if (!profile?.is_admin) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 })
     }
 
-    const { name, description, photo_url, system_prompt } = await request.json()
+    // Recebe category_id agora
+    const { name, description, photo_url, system_prompt, category_id } = await request.json()
+
+    if (!name || !system_prompt) {
+       return NextResponse.json({ error: "Nome e Prompt são obrigatórios" }, { status: 400 })
+    }
 
     const { data: agent, error } = await supabase
       .from("agents")
@@ -29,6 +34,7 @@ export async function POST(request: Request) {
         description,
         photo_url,
         system_prompt,
+        category_id: category_id || null, // Salva a categoria
         created_by: user.id,
         is_public: true,
       })
@@ -36,13 +42,13 @@ export async function POST(request: Request) {
       .single()
 
     if (error) {
-      console.error("[v0] Error creating agent:", error)
-      return NextResponse.json({ error: "Erro ao criar agente" }, { status: 500 })
+      console.error("Error creating agent:", error)
+      return NextResponse.json({ error: "Erro ao criar agente: " + error.message }, { status: 500 })
     }
 
     return NextResponse.json({ agent })
   } catch (error) {
-    console.error("[v0] Admin API error:", error)
+    console.error("Admin API error:", error)
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 })
   }
 }
