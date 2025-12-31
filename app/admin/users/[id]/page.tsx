@@ -7,7 +7,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, Loader2, UserCheck } from "lucide-react"
+import { Switch } from "@/components/ui/switch" // Certifique-se de ter este componente ou use um checkbox simples
+import { ArrowLeft, Loader2, Save, UserCheck } from "lucide-react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 
 export default function EditUserPage() {
@@ -41,12 +42,16 @@ export default function EditUserPage() {
         router.push("/admin")
         return
       }
+
+      // Tentar buscar email da tabela auth (só funciona se for admin service role ou via rpc, 
+      // mas como estamos no client, talvez não consigamos ver o email. 
+      // Vamos tentar mostrar apenas o ID se o email não estiver no profile)
       
       setFormData({
         full_name: profile.full_name || "",
         total_credits: profile.total_credits || 0,
         is_admin: profile.is_admin || false,
-        email: userId // Usaremos o ID como referência visual
+        email: userId // Usaremos o ID como referência visual já que email é protegido
       })
       
       setFetching(false)
@@ -151,6 +156,7 @@ export default function EditUserPage() {
                   Permite acesso total ao painel admin e edição de agentes.
                 </p>
               </div>
+              {/* Se não tiver o componente Switch do Shadcn, use um input checkbox simples */}
               <div className="flex items-center gap-2">
                  <input 
                     type="checkbox" 
