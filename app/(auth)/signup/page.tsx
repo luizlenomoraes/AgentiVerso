@@ -12,6 +12,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [fullName, setFullName] = useState("")
+  const [phone, setPhone] = useState("") // Novo campo
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -32,6 +33,7 @@ export default function SignupPage() {
         emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
         data: {
           full_name: fullName,
+          phone: phone, // Enviando telefone para o Trigger criar no profile
         },
       },
     })

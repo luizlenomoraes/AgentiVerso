@@ -106,12 +106,20 @@ export default function AdminPage() {
               Painel Admin
             </h1>
           </div>
-          <Button asChild variant="outline" className="bg-transparent">
-            <Link href="/admin/settings">
-              <Settings className="w-4 h-4 mr-2" />
-              Configurações
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" className="bg-transparent">
+              <Link href="/admin/plans">
+                <CreditCard className="w-4 h-4 mr-2" />
+                Planos
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="bg-transparent">
+              <Link href="/admin/settings">
+                <Settings className="w-4 h-4 mr-2" />
+                Configurações
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -203,9 +211,6 @@ export default function AdminPage() {
                         <td className="p-4">
                           <div>
                             <p className="font-medium">{user.full_name || "Sem nome"}</p>
-                            <p className="text-xs text-muted-foreground font-mono truncate max-w-[200px]">
-                              {user.id}
-                            </p>
                           </div>
                         </td>
                         <td className="p-4">

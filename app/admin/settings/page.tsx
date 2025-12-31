@@ -2,41 +2,34 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, Save, Loader2, Key } from "lucide-react"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { ArrowLeft, Save, Loader2, Key, Database, ShieldCheck } from "lucide-react"
+import Link from "next/link"
 
-export default function AdminSettingsPage() {
-  const router = useRouter()
-  const supabase = getSupabaseBrowserClient()
+export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
-  
-  const [keys, setKeys] = useState({
+  const [settings, setSettings] = useState({
     openai_api_key: "",
-    gemini_api_key: "",
-    anthropic_api_key: "",
+    default_model: "gpt-4o",
   })
 
-  // Buscar chaves salvas ao carregar
   useEffect(() => {
-    const fetchSettings = async () => {
-      const { data } = await supabase.from("app_settings").select("*")
-      
-      if (data) {
-        const newKeys = { ...keys }
-        data.forEach((item) => {
-          if (item.key in newKeys) {
-            // @ts-ignore
-            newKeys[item.key] = item.value || ""
-          }
+    async function fetchSettings() {
+      try {
+        const response = await fetch("/api/admin/settings")
+        const data = await response.json()
+        setSettings({
+          openai_api_key: data.openai_api_key || "",
+          default_model: data.default_model || "gpt-4o",
         })
-        setKeys(newKeys)
+      } catch (error) {
+        console.error("Erro ao carregar configurações")
+      } finally {
+        setFetching(false)
       }
-      setFetching(false)
     }
     fetchSettings()
   }, [])
@@ -44,26 +37,30 @@ export default function AdminSettingsPage() {
   const handleSave = async () => {
     setLoading(true)
     try {
-      // Salvar cada chave individualmente
-      const updates = Object.entries(keys).map(([key, value]) => {
-        return supabase
-          .from("app_settings")
-          .upsert({ key, value, updated_at: new Date().toISOString() })
+      const response = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
       })
 
-      await Promise.all(updates)
-      alert("Configurações salvas com sucesso!")
-      router.refresh()
+      if (response.ok) {
+        alert("Configurações salvas com sucesso!")
+      } else {
+        alert("Erro ao salvar configurações")
+      }
     } catch (error) {
-      console.error("Erro ao salvar:", error)
-      alert("Erro ao salvar configurações")
+      alert("Erro de conexão")
     } finally {
       setLoading(false)
     }
   }
 
   if (fetching) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
@@ -76,67 +73,70 @@ export default function AdminSettingsPage() {
             </Link>
           </Button>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            Configurações do Sistema
+            Configurações do SaaS
           </h1>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <Card className="p-8 bg-card/50 backdrop-blur border-border/50 space-y-6">
-          <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-            <Key className="w-6 h-6 text-primary" />
-            <h2 className="text-xl font-semibold">Chaves de API (LLMs)</h2>
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <Card className="p-8 bg-card/50 backdrop-blur border-border/50 space-y-6">
+            <div className="flex items-center gap-3 text-primary">
+              <Key className="w-6 h-6" />
+              <h2 className="text-xl font-bold">Chaves de API (LLM)</h2>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">OpenAI API Key Global</label>
+                <Input
+                  type="password"
+                  placeholder="sk-..."
+                  value={settings.openai_api_key}
+                  onChange={(e) => setSettings({ ...settings, openai_api_key: e.target.value })}
+                  className="bg-background/50 border-border/50 font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Esta chave será usada para todos os agentes do sistema.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Modelo Padrão</label>
+                <select
+                  value={settings.default_model}
+                  onChange={(e) => setSettings({ ...settings, default_model: e.target.value })}
+                  className="w-full flex h-10 rounded-md border border-input bg-background/50 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="gpt-4o">gpt-4o (Recomendado)</option>
+                  <option value="gpt-4-turbo">gpt-4-turbo</option>
+                  <option value="gpt-3.5-turbo">gpt-3.5-turbo (Econômico)</option>
+                </select>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-8 bg-card/50 backdrop-blur border-border/50 space-y-6">
+            <div className="flex items-center gap-3 text-primary">
+              <ShieldCheck className="w-6 h-6" />
+              <h2 className="text-xl font-bold">Regras de Acesso</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Configure aqui comportamentos globais de novos usuários e pagamentos. (Em breve mais opções)
+            </p>
+          </Card>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSave}
+              disabled={loading}
+              className="w-full md:w-auto bg-gradient-to-r from-primary to-accent hover:opacity-90 px-8"
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Salvar Todas as Configurações
+            </Button>
           </div>
-          
-          <p className="text-sm text-muted-foreground">
-            Defina as chaves de API para os modelos de inteligência artificial. 
-            Se deixar em branco, o sistema tentará usar as variáveis de ambiente (.env).
-          </p>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">OpenAI API Key (GPT-4o, GPT-3.5)</label>
-              <Input
-                type="password"
-                value={keys.openai_api_key}
-                onChange={(e) => setKeys({ ...keys, openai_api_key: e.target.value })}
-                placeholder="sk-..."
-                className="bg-background/50 font-mono"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Google Gemini API Key</label>
-              <Input
-                type="password"
-                value={keys.gemini_api_key}
-                onChange={(e) => setKeys({ ...keys, gemini_api_key: e.target.value })}
-                placeholder="AIza..."
-                className="bg-background/50 font-mono"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Anthropic Claude API Key</label>
-              <Input
-                type="password"
-                value={keys.anthropic_api_key}
-                onChange={(e) => setKeys({ ...keys, anthropic_api_key: e.target.value })}
-                placeholder="sk-ant-..."
-                className="bg-background/50 font-mono"
-              />
-            </div>
-          </div>
-
-          <Button 
-            onClick={handleSave} 
-            disabled={loading} 
-            className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-            Salvar Configurações
-          </Button>
-        </Card>
+        </div>
       </main>
     </div>
   )

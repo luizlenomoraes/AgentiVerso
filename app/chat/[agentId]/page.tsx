@@ -2,7 +2,13 @@ import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ChatInterface } from "@/components/chat-interface"
 
-export default async function ChatPage({ params }: { params: { agentId: string } }) {
+export default async function ChatPage({
+  params,
+  searchParams
+}: {
+  params: { agentId: string },
+  searchParams: { conversation?: string }
+}) {
   const supabase = await getSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -21,33 +27,39 @@ export default async function ChatPage({ params }: { params: { agentId: string }
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
   const availableCredits = (profile?.total_credits || 0) - (profile?.used_credits || 0)
 
-  // 3. BUSCAR HISTÓRICO DE CONVERSA (NOVO)
-  // Pegamos a última conversa ativa para este agente/usuário
-  const { data: conversation } = await supabase
-    .from("conversations")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("agent_id", params.agentId)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .single()
+  // 3. BUSCAR HISTÓRICO DE CONVERSA
+  let targetConversationId = searchParams.conversation
+
+  // Se não veio ID na URL, busca a última conversa deste agente
+  if (!targetConversationId) {
+    const { data: latestChat } = await supabase
+      .from("conversations")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("agent_id", params.agentId)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .single()
+
+    targetConversationId = latestChat?.id
+  }
 
   let initialMessages = []
-  
-  if (conversation) {
+
+  if (targetConversationId) {
     const { data: msgs } = await supabase
       .from("messages")
       .select("*")
-      .eq("conversation_id", conversation.id)
-      .order("created_at", { ascending: true }) // Ordem cronológica
-    
+      .eq("conversation_id", targetConversationId)
+      .order("created_at", { ascending: true })
+
     initialMessages = msgs || []
   }
 
   return (
-    <ChatInterface 
-      agent={agent} 
-      userId={user.id} 
+    <ChatInterface
+      agent={agent}
+      userId={user.id}
       availableCredits={availableCredits}
       initialMessages={initialMessages}        // Passa o histórico
       initialConversationId={conversation?.id} // Passa o ID para continuar a mesma conversa

@@ -1,9 +1,8 @@
 "use client"
 
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { MessageSquare, Clock } from "lucide-react"
+import { MessageSquare, Clock, Trash2, Loader2 } from "lucide-react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 type Conversation = {
   id: string
@@ -21,7 +20,33 @@ type ConversationHistoryProps = {
   conversations: Conversation[]
 }
 
-export function ConversationHistory({ conversations }: ConversationHistoryProps) {
+export function ConversationHistory({ conversations: initialConversations }: ConversationHistoryProps) {
+  const [conversations, setConversations] = useState(initialConversations)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const router = useRouter()
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Deseja excluir esta conversa permanentemente?")) return
+
+    setDeletingId(id)
+    try {
+      const response = await fetch(`/api/conversations/${id}`, {
+        method: "DELETE",
+      })
+
+      if (response.ok) {
+        setConversations(prev => prev.filter(c => c.id !== id))
+        router.refresh()
+      } else {
+        alert("Erro ao excluir conversa")
+      }
+    } catch (error) {
+      alert("Erro de conexão")
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -34,14 +59,29 @@ export function ConversationHistory({ conversations }: ConversationHistoryProps)
           {conversations.map((conversation) => (
             <Card
               key={conversation.id}
-              className="p-6 space-y-4 bg-card/50 backdrop-blur border-border/50 hover:border-primary/50 transition-all"
+              className="p-6 space-y-4 bg-card/50 backdrop-blur border-border/50 hover:border-primary/50 transition-all group"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl flex-shrink-0">
                   {conversation.agents?.photo_url || "🤖"}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">{conversation.title}</h3>
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-semibold truncate pr-2">{conversation.title}</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => handleDelete(conversation.id)}
+                      disabled={deletingId === conversation.id}
+                    >
+                      {deletingId === conversation.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                   <p className="text-sm text-muted-foreground">{conversation.agents?.name}</p>
                 </div>
               </div>

@@ -17,34 +17,42 @@ export function AgentActions({ agentId }: { agentId: string }) {
     if (!confirm("Tem certeza que deseja excluir este agente?")) return
 
     setLoading(true)
-    const { error } = await supabase.from("agents").delete().eq("id", agentId)
+    try {
+      const response = await fetch(`/api/admin/agents/${agentId}`, {
+        method: "DELETE",
+      })
 
-    if (error) {
-      alert("Erro ao excluir: " + error.message)
-    } else {
-      router.refresh() // Recarrega a lista
+      if (response.ok) {
+        router.refresh()
+      } else {
+        const error = await response.json()
+        alert("Erro ao excluir: " + (error.error || "Erro desconhecido"))
+      }
+    } catch (error) {
+      alert("Erro de rede ao tentar excluir")
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
     <div className="flex gap-2">
-      <Button 
-        size="sm" 
-        variant="outline" 
+      <Button
+        size="sm"
+        variant="outline"
         className="flex-1 bg-transparent"
         onClick={() => router.push(`/admin/agents/${agentId}`)} // Rota de Edição
       >
         <Edit className="w-4 h-4 mr-2" /> Editar
       </Button>
-      <Button 
-        size="sm" 
-        variant="destructive" 
+      <Button
+        size="sm"
+        variant="destructive"
         className="flex-1"
         onClick={handleDelete}
         disabled={loading}
       >
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />} 
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
         Excluir
       </Button>
     </div>
@@ -55,12 +63,12 @@ export function AgentActions({ agentId }: { agentId: string }) {
 
 export function UserActions({ userId }: { userId: string }) {
   const router = useRouter()
-  
+
   return (
     <div className="flex gap-2">
-      <Button 
-        size="sm" 
-        variant="outline" 
+      <Button
+        size="sm"
+        variant="outline"
         className="text-xs bg-transparent"
         onClick={() => router.push(`/admin/users/${userId}`)}
       >
