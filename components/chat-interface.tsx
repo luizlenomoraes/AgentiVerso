@@ -35,6 +35,7 @@ export function ChatInterface({ agent, userId, availableCredits }: ChatInterface
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
   const [credits, setCredits] = useState(availableCredits)
+  const [conversationId, setConversationId] = useState<string | null>(null) // Estado para ID da conversa
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -63,8 +64,9 @@ export function ChatInterface({ agent, userId, availableCredits }: ChatInterface
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           agentId: agent.id,
-          message: input.trim(),
-          userId,
+          message: userMessage.content,
+          conversationId, // Envia o ID da conversa se existir
+          // userId não é necessário enviar, o servidor pega do cookie
         }),
       })
 
@@ -72,6 +74,11 @@ export function ChatInterface({ agent, userId, availableCredits }: ChatInterface
 
       if (data.error) {
         throw new Error(data.error)
+      }
+
+      // Se o servidor retornou um novo ID de conversa, salvamos ele
+      if (data.conversationId) {
+        setConversationId(data.conversationId)
       }
 
       const assistantMessage: Message = {
@@ -84,7 +91,7 @@ export function ChatInterface({ agent, userId, availableCredits }: ChatInterface
       setMessages((prev) => [...prev, assistantMessage])
       setCredits(data.remainingCredits)
     } catch (error) {
-      console.error("[v0] Chat error:", error)
+      console.error("Chat error:", error)
       const errorMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -108,7 +115,7 @@ export function ChatInterface({ agent, userId, availableCredits }: ChatInterface
               </Link>
             </Button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl">
                 {agent.photo_url || "🤖"}
               </div>
               <div>
