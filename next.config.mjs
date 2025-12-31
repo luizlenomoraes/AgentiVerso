@@ -6,6 +6,11 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  experimental: {
+    // Evita que o build use muitos recursos simultaneamente no VPS
+    cpus: 1,
+    workerThreads: false,
+  },
 }
 
 export default nextConfig
