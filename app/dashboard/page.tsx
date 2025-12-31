@@ -1,12 +1,13 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button" // Certifique-se de importar o Button
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CreditStats } from "@/components/credit-stats"
 import { ConversationHistory } from "@/components/conversation-history"
+import { ShieldAlert } from "lucide-react" // Ícone para o botão de admin
 
 export default async function DashboardPage() {
   const supabase = await getSupabaseServerClient()
@@ -58,6 +59,18 @@ export default async function DashboardPage() {
             AgentiVerso
           </Link>
           <div className="flex items-center gap-4">
+            
+            {/* === NOVO: Botão Exclusivo para Admins === */}
+            {profile?.is_admin && (
+              <Button asChild variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
+                <Link href="/admin" className="flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4" />
+                  Painel Admin
+                </Link>
+              </Button>
+            )}
+            {/* ========================================= */}
+
             <Link href="/dashboard/credits">
               <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer">
                 <span className="text-sm text-muted-foreground">Créditos:</span>
