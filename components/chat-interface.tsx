@@ -47,16 +47,16 @@ export function ChatInterface({
   const [loading, setLoading] = useState(false)
   const [credits, setCredits] = useState(availableCredits)
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // ... (O resto do código: useEffect scroll, handleSend, return...) 
-  // O código restante permanece idêntico, apenas a inicialização mudou.
+  // Scroll automático para a última mensagem
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [messages])
+    scrollToBottom()
+  }, [messages, loading])
 
   const handleSend = async () => {
     if (!input.trim() || loading || credits <= 0) return
@@ -147,7 +147,7 @@ export function ChatInterface({
         </div>
       </header>
 
-      <ScrollArea ref={scrollRef} className="flex-1 p-4">
+      <ScrollArea className="flex-1 p-4">
         <div className="container mx-auto max-w-4xl space-y-4">
           {messages.length === 0 && (
             <Card className="p-8 text-center space-y-4 bg-card/50 backdrop-blur border-border/50">
@@ -195,6 +195,9 @@ export function ChatInterface({
               </Card>
             </div>
           )}
+
+          {/* Elemento para scroll automático */}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
