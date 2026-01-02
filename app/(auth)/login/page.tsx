@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
+import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -36,37 +36,57 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-background to-background" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f0a_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f0a_1px,transparent_1px)] bg-[size:24px_24px]" />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Grid de fundo animado */}
+      <div className="cyber-grid" />
 
-      <div className="relative z-10 w-full max-w-md p-8 space-y-6 bg-card/50 backdrop-blur-xl rounded-2xl border border-border/50 shadow-2xl">
+      {/* Linha neon no topo */}
+      <div className="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
+
+      {/* Gradientes de fundo */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(0,255,249,0.15)_0%,transparent_40%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_90%_80%,rgba(255,0,193,0.1)_0%,transparent_40%)]" />
+
+      {/* Card principal com efeito neon */}
+      <main className="relative z-10 w-full max-w-md glass-panel neon-border rounded-2xl p-8 space-y-6">
+
+        {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-            AgentiVerso
+          <h1 className="font-orbitron text-3xl md:text-4xl font-bold tracking-wider">
+            AGENTI<span className="text-primary">VERSO</span>
           </h1>
-          <p className="text-muted-foreground">Entre na sua conta</p>
+          <p className="text-muted-foreground text-sm tracking-widest uppercase">
+            Autenticação Requerida
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        {/* Mensagem de erro */}
+        {error && (
+          <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/30 text-center font-medium">
+            {error}
+          </div>
+        )}
+
+        {/* Formulário */}
+        <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
+            <label htmlFor="email" className="block text-primary text-xs uppercase tracking-wider ml-1">
+              Identificação de Usuário
             </label>
             <Input
               id="email"
               type="email"
-              placeholder="seu@email.com"
+              placeholder="usuario@nexus.co"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="bg-background/50 border-border/50"
+              className="cyber-input"
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium">
-              Senha
+            <label htmlFor="password" className="block text-primary text-xs uppercase tracking-wider ml-1">
+              Chave de Acesso
             </label>
             <Input
               id="password"
@@ -75,32 +95,33 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="bg-background/50 border-border/50"
+              className="cyber-input"
             />
           </div>
 
-          {error && (
-            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
-              {error}
-            </div>
-          )}
-
           <Button
             type="submit"
-            className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+            className="w-full py-3 font-orbitron font-bold tracking-widest cyber-button mt-4"
             disabled={loading}
           >
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              "INICIAR SESSÃO"
+            )}
           </Button>
         </form>
 
-        <p className="text-center text-sm text-muted-foreground">
-          Não tem uma conta?{" "}
-          <Link href="/signup" className="text-primary hover:text-accent transition-colors font-medium">
-            Cadastre-se
-          </Link>
-        </p>
-      </div>
+        {/* Link para cadastro */}
+        <div className="text-center">
+          <p className="text-muted-foreground text-sm">
+            Ainda não tem credenciais?{" "}
+            <Link href="/signup" className="text-primary hover:text-accent font-bold tracking-wider transition-colors">
+              REGISTRAR
+            </Link>
+          </p>
+        </div>
+      </main>
     </div>
   )
 }

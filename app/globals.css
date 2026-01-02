@@ -142,6 +142,48 @@ button:hover:not(:disabled) {
   box-shadow: 0 0 20px rgba(0, 255, 249, 0.4);
 }
 
+/* Classe para fonte Orbitron */
+.font-orbitron {
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* Input estilo cyber específico */
+.cyber-input {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-neon-cyan) !important;
+  transition: all 0.3s ease;
+}
+
+.cyber-input:focus {
+  border-color: var(--color-neon-cyan) !important;
+  box-shadow: 0 0 15px rgba(0, 255, 249, 0.3) !important;
+}
+
+.cyber-input::placeholder {
+  color: rgba(0, 255, 249, 0.4);
+}
+
+/* Botão estilo cyber */
+.cyber-button {
+  background: transparent !important;
+  color: var(--color-neon-cyan) !important;
+  border: 1px solid var(--color-neon-cyan) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.cyber-button:hover:not(:disabled) {
+  background: var(--color-neon-cyan) !important;
+  color: var(--color-dark-bg) !important;
+  box-shadow: 0 0 30px rgba(0, 255, 249, 0.5) !important;
+}
+
+.cyber-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Cards */
 .card,
 [class*="Card"] {
