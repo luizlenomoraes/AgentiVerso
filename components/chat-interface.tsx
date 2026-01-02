@@ -139,10 +139,13 @@ export function ChatInterface({
             >
               Nova Conversa
             </Button>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
-              <span className="text-sm text-muted-foreground">Créditos:</span>
-              <span className="font-bold text-primary">{credits}</span>
-            </div>
+            <Link href="/dashboard/credits">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer group">
+                <span className="text-sm text-muted-foreground group-hover:text-primary transition-colors">Créditos:</span>
+                <span className="font-bold text-primary">{credits}</span>
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse ml-1" />
+              </div>
+            </Link>
           </div>
         </div>
       </header>
