@@ -57,6 +57,61 @@ export async function POST(request: Request) {
     Responda no idioma do usuário e mantenha a persona.
     `
 
+    // ============================================
+    // RAG: BUSCA NA BASE DE CONHECIMENTO
+    // ============================================
+    let contextText = ""
+
+    try {
+      // Gerar embedding da pergunta do usuário
+      let queryEmbedding: number[] = []
+
+      if (provider === "gemini") {
+        const genAI = new GoogleGenerativeAI(apiKey)
+        const embeddingModel = genAI.getGenerativeModel({ model: "text-embedding-004" })
+        const result = await embeddingModel.embedContent(message)
+        queryEmbedding = result.embedding.values
+      } else {
+        // OpenAI (também funciona para outros providers)
+        const openai = new OpenAI({ apiKey })
+        const embeddingResponse = await openai.embeddings.create({
+          model: "text-embedding-3-small",
+          input: message.replace(/\n/g, " "),
+        })
+        queryEmbedding = embeddingResponse.data[0].embedding
+      }
+
+      // Buscar documentos relevantes no Supabase
+      const { data: documents } = await supabase.rpc("match_knowledge", {
+        query_embedding: queryEmbedding,
+        match_threshold: 0.5,
+        match_count: 5,
+        p_agent_id: agentId,
+      })
+
+      if (documents && documents.length > 0) {
+        contextText = documents.map((doc: any) => doc.content).join("\n---\n")
+        console.log(`RAG: ${documents.length} documentos encontrados`)
+      }
+    } catch (err) {
+      console.error("Erro no RAG:", err)
+      // Continua sem contexto se falhar
+    }
+
+    // Atualizar system prompt com contexto
+    const enrichedSystemPrompt = contextText
+      ? `${systemPrompt}
+      
+CONTEXTO DA BASE DE CONHECIMENTO:
+${contextText}
+
+INSTRUÇÕES:
+- Use as informações acima para responder se forem relevantes
+- Se a resposta não estiver no contexto, use seu conhecimento geral
+- Sempre mantenha a persona do agente
+`
+      : systemPrompt
+
     // BUSCAR HISTÓRICO
     let conversationHistory: any[] = []
 
@@ -81,7 +136,7 @@ export async function POST(request: Request) {
         const geminiModel = genAI.getGenerativeModel({ model })
 
         const history = [
-          { role: "user", parts: [{ text: systemPrompt }] },
+          { role: "user", parts: [{ text: enrichedSystemPrompt }] },
           { role: "model", parts: [{ text: "Entendido! Estou pronto para ajudar." }] },
         ]
 
@@ -102,7 +157,7 @@ export async function POST(request: Request) {
         const openai = new OpenAI({ apiKey })
 
         const messages: any[] = [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: enrichedSystemPrompt },
         ]
 
         conversationHistory.forEach((msg) => {
@@ -135,7 +190,7 @@ export async function POST(request: Request) {
         const response = await anthropic.messages.create({
           model,
           max_tokens: 4096,
-          system: systemPrompt,
+          system: enrichedSystemPrompt,
           messages,
         })
 
@@ -151,7 +206,7 @@ export async function POST(request: Request) {
         })
 
         const messages: any[] = [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: enrichedSystemPrompt },
         ]
 
         conversationHistory.forEach((msg) => {

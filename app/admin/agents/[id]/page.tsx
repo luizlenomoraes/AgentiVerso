@@ -104,15 +104,29 @@ export default function EditAgentPage() {
     return (
         <div className="min-h-screen bg-background">
             <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
-                <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-                    <Button asChild variant="ghost" size="icon">
-                        <Link href="/admin">
-                            <ArrowLeft className="w-5 h-5" />
+                <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Button asChild variant="ghost" size="icon">
+                            <Link href="/admin">
+                                <ArrowLeft className="w-5 h-5" />
+                            </Link>
+                        </Button>
+                        <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                            Editar Agente
+                        </h1>
+                    </div>
+
+                    {/* Botão Base de Conhecimento */}
+                    <Button
+                        asChild
+                        variant="outline"
+                        className="border-accent/50 text-accent hover:bg-accent/10 cyber-button"
+                    >
+                        <Link href={`/admin/agents/${agentId}/knowledge`} className="flex items-center gap-2">
+                            <span className="text-xl">🧠</span>
+                            Base de Conhecimento
                         </Link>
                     </Button>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                        Editar Agente
-                    </h1>
                 </div>
             </header>
 

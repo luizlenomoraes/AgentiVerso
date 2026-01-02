@@ -1,125 +1,272 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@300;500;700&display=swap');
 
-@custom-variant dark (&:is(.dark *));
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: oklch(0.08 0.01 265);
-  --foreground: oklch(0.98 0.01 265);
-  --card: oklch(0.12 0.015 265);
-  --card-foreground: oklch(0.98 0.01 265);
-  --popover: oklch(0.12 0.015 265);
-  --popover-foreground: oklch(0.98 0.01 265);
-  --primary: oklch(0.65 0.25 265);
-  --primary-foreground: oklch(0.98 0.01 265);
-  --secondary: oklch(0.25 0.02 265);
-  --secondary-foreground: oklch(0.98 0.01 265);
-  --muted: oklch(0.2 0.015 265);
-  --muted-foreground: oklch(0.6 0.01 265);
-  --accent: oklch(0.7 0.22 310);
-  --accent-foreground: oklch(0.98 0.01 265);
-  --destructive: oklch(0.6 0.25 25);
-  --destructive-foreground: oklch(0.98 0.01 265);
-  --border: oklch(0.25 0.02 265);
-  --input: oklch(0.25 0.02 265);
-  --ring: oklch(0.65 0.25 265);
-  --chart-1: oklch(0.65 0.25 265);
-  --chart-2: oklch(0.7 0.22 310);
-  --chart-3: oklch(0.6 0.2 200);
-  --chart-4: oklch(0.65 0.2 150);
-  --chart-5: oklch(0.7 0.25 50);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.1 0.015 265);
-  --sidebar-foreground: oklch(0.98 0.01 265);
-  --sidebar-primary: oklch(0.65 0.25 265);
-  --sidebar-primary-foreground: oklch(0.98 0.01 265);
-  --sidebar-accent: oklch(0.2 0.015 265);
-  --sidebar-accent-foreground: oklch(0.98 0.01 265);
-  --sidebar-border: oklch(0.25 0.02 265);
-  --sidebar-ring: oklch(0.65 0.25 265);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
-}
-
-@theme inline {
-  --font-sans: "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+@layer base {
+  :root {
+    --neon-cyan: 180 100% 50%;
+    --neon-pink: 320 100% 50%;
+    --background: 222 47% 11%;
+    --foreground: 180 100% 97%;
+    --card: 222 50% 14%;
+    --card-foreground: 180 100% 97%;
+    --popover: 222 50% 14%;
+    --popover-foreground: 180 100% 97%;
+    --primary: 180 100% 50%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 320 100% 50%;
+    --secondary-foreground: 180 100% 97%;
+    --muted: 222 30% 25%;
+    --muted-foreground: 180 30% 70%;
+    --accent: 320 100% 50%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 222 30% 30%;
+    --input: 222 30% 30%;
+    --ring: 180 100% 50%;
+    --radius: 0.75rem;
+  }
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Orbitron', sans-serif;
+  }
+}
+
+@layer components {
+
+  /* Efeito de vidro futurista */
+  .glass-panel {
+    @apply bg-card/50 backdrop-blur-xl border border-border/30;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  /* Bordas brilhantes animadas */
+  .neon-border {
+    position: relative;
+    z-index: 1;
+  }
+
+  .neon-border::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    background: linear-gradient(45deg, hsl(var(--primary)), transparent, hsl(var(--accent)), transparent, hsl(var(--primary)));
+    background-size: 400%;
+    border-radius: inherit;
+    animation: neon-glow 20s linear infinite;
+    opacity: 0.4;
+    z-index: -1;
+  }
+
+  @keyframes neon-glow {
+
+    0%,
+    100% {
+      background-position: 0 0;
+    }
+
+    50% {
+      background-position: 400% 0;
+    }
+  }
+
+  /* Tabs com indicador visual claro */
+  [role="tablist"] button[data-state="active"] {
+    @apply bg-primary/20 text-primary border-primary/50;
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+
+  [role="tablist"] button[data-state="inactive"] {
+    @apply text-muted-foreground hover:text-foreground hover:bg-muted/50;
+    transition: all 0.3s ease;
+  }
+
+  /* Botão de créditos destacado */
+  .credits-badge {
+    @apply relative overflow-hidden;
+  }
+
+  .credits-badge::after {
+    content: '→ Comprar';
+    position: absolute;
+    right: -100%;
+    top: 50%;
+    transform: translateY(-50%);
+    @apply text-xs text-primary font-bold opacity-0;
+    transition: all 0.3s ease;
+  }
+
+  .credits-badge:hover::after {
+    right: 12px;
+    opacity: 1;
+  }
+
+  .credits-badge:hover {
+    @apply pr-24;
+  }
+
+  /* Grid de fundo animado */
+  .cyber-grid {
+    position: fixed;
+    inset: 0;
+    width: 200%;
+    height: 200%;
+    background-image:
+      linear-gradient(hsl(var(--primary) / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    transform: perspective(500px) rotateX(60deg) translateY(-100px);
+    animation: grid-move 20s linear infinite;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  @keyframes grid-move {
+    0% {
+      transform: perspective(500px) rotateX(60deg) translateY(0);
+    }
+
+    100% {
+      transform: perspective(500px) rotateX(60deg) translateY(50px);
+    }
+  }
+
+  /* Hover states melhorados */
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+
+  .card-hover:hover {
+    @apply scale-105 shadow-2xl;
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+  }
+
+  /* Botões cyber */
+  .cyber-button {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+
+  .cyber-button:hover:not(:disabled) {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+  }
+
+  /* Pulse de atenção */
+  .attention-pulse {
+    animation: attention-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes attention-pulse {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+    }
+
+    50% {
+      box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
+    }
+  }
+
+  /* ============================================ */
+  /* RESPONSIVIDADE MOBILE */
+  /* ============================================ */
+
+  /* Touch targets maiores */
+  @media (max-width: 768px) {
+
+    button,
+    a,
+    [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Grid de fundo menos intenso em mobile */
+    .cyber-grid {
+      opacity: 0.3;
+    }
+
+    /* Tabs responsivas */
+    [role="tablist"] {
+      @apply flex-wrap;
+    }
+
+    [role="tablist"] button {
+      @apply flex-1 min-w-[120px] text-sm;
+    }
+
+    /* Cards com menos padding */
+    .glass-panel {
+      @apply p-4;
+    }
+
+    /* Texto responsivo */
+    h1 {
+      @apply text-xl;
+    }
+
+    h2 {
+      @apply text-lg;
+    }
+
+    /* Botões empilhados em mobile */
+    .button-group-mobile {
+      @apply flex-col gap-2;
+    }
+
+    .button-group-mobile>* {
+      @apply w-full;
+    }
+
+    /* Header fixo otimizado */
+    header {
+      @apply py-3;
+    }
+
+    /* Scroll suave em elementos */
+    .mobile-scroll {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    /* Hide no mobile */
+    .hide-mobile {
+      @apply hidden;
+    }
+
+    /* Show apenas em mobile */
+    .show-mobile {
+      @apply block;
+    }
+  }
+
+  /* Desktop */
+  @media (min-width: 769px) {
+    .hide-desktop {
+      @apply hidden;
+    }
+
+    .show-mobile {
+      @apply hidden;
+    }
   }
 }

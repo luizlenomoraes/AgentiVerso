@@ -49,34 +49,40 @@ export default async function DashboardPage() {
   const availableCredits = (profile?.total_credits || 0) - (profile?.used_credits || 0)
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-background relative">
+      {/* Grid de fundo cyberpunk */}
+      <div className="cyber-grid" />
+
+      <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl sticky top-0 z-50 relative">
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
+
+        <div className="container mx-auto px-2 sm:px-4 py-3 flex items-center justify-between gap-2">
           <Link
             href="/dashboard"
-            className="text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
+            className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent font-orbitron"
           >
             AgentiVerso
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
 
-            {/* === NOVO: Botão Exclusivo para Admins === */}
+            {/* Botão Admin */}
             {profile?.is_admin && (
-              <Button asChild variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
+              <Button asChild variant="outline" size="sm" className="border-primary/50 text-primary hover:bg-primary/10 transition-all hide-mobile">
                 <Link href="/admin" className="flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4" />
-                  Painel Admin
+                  <span className="hidden sm:inline">Admin</span>
                 </Link>
               </Button>
             )}
-            {/* ========================================= */}
 
-            <Link href="/dashboard/credits">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer">
-                <span className="text-sm text-muted-foreground">Créditos:</span>
-                <span className="font-bold text-primary">{availableCredits}</span>
+            {/* BOTÃO DE CRÉDITOS MELHORADO */}
+            <Link href="/dashboard/credits" className="relative">
+              <div className="credits-badge flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg bg-primary/10 border border-primary/30 hover:bg-primary/20 transition-all cursor-pointer attention-pulse">
+                <span className="text-xs sm:text-sm text-muted-foreground hidden sm:inline">Créditos:</span>
+                <span className="text-xs sm:text-sm md:text-base font-bold text-primary">{availableCredits}</span>
               </div>
             </Link>
+
             <form
               action={async () => {
                 "use server"
@@ -85,7 +91,7 @@ export default async function DashboardPage() {
                 redirect("/login")
               }}
             >
-              <Button variant="ghost" type="submit">
+              <Button variant="ghost" type="submit" size="sm" className="hover:text-destructive transition-colors text-xs sm:text-sm">
                 Sair
               </Button>
             </form>
