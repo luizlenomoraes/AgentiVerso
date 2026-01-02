@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone', // Otimiza para Docker
+  output: 'standalone',
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -8,9 +8,12 @@ const nextConfig = {
     unoptimized: true,
   },
   experimental: {
-    // Evita que o build use muitos recursos simultaneamente no VPS
     cpus: 1,
     workerThreads: false,
+  },
+  // Configuração para produção
+  env: {
+    HOSTNAME: '0.0.0.0',
   },
 }
 

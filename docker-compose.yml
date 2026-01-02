@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    image: ${COOLIFY_IMAGE_TAG:-app:latest}
+    container_name: ${COOLIFY_CONTAINER_NAME:-app}
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    ports:
+      - "3000:3000"
+    networks:
+      - coolify
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+networks:
+  coolify:
+    external: true
