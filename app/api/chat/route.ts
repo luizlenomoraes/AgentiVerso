@@ -29,6 +29,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Agente não encontrado" }, { status: 404 })
     }
 
+    // Segurança: Verificar permissão de acesso ao agente
+    if (!agent.is_public && agent.user_id !== userId) {
+      // Verificar se o usuário é admin
+      const { data: requesterProfile } = await supabase.from("profiles").select("is_admin").eq("id", userId).single()
+
+      if (!requesterProfile?.is_admin) {
+        return NextResponse.json({ error: "Acesso negado a este agente privado" }, { status: 403 })
+      }
+    }
+
     // BUSCAR CONFIGURAÇÕES DO ADMIN
     const { data: aiSettings } = await supabase
       .from("app_settings")

@@ -17,6 +17,7 @@ type Package = {
 export function CreditsPackages({ packages }: { packages: any[] }) {
   // Se não vier pacotes do banco, usa fallback ou mostra mensagem
   const displayPackages = packages.length > 0 ? packages.map((pkg: any) => ({
+    id: pkg.id,
     credits: pkg.amount,
     price: pkg.price,
     popular: pkg.name.toLowerCase().includes("popular") || pkg.name.toLowerCase().includes("plus"),
@@ -26,14 +27,14 @@ export function CreditsPackages({ packages }: { packages: any[] }) {
   const [loadingPkg, setLoadingPkg] = useState<number | null>(null)
   const router = useRouter()
 
-  const handleBuy = async (pkg: { credits: number, price: number }) => {
+  const handleBuy = async (pkg: { id: string, credits: number, price: number }) => {
     try {
       setLoadingPkg(pkg.credits)
 
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pkg),
+        body: JSON.stringify({ packageId: pkg.id }), // Enviar apenas o ID
       })
 
       const data = await response.json()
@@ -93,8 +94,8 @@ export function CreditsPackages({ packages }: { packages: any[] }) {
 
           <Button
             className={`w-full ${pkg.popular
-                ? "bg-gradient-to-r from-primary to-accent hover:opacity-90"
-                : "bg-secondary hover:bg-secondary/80"
+              ? "bg-gradient-to-r from-primary to-accent hover:opacity-90"
+              : "bg-secondary hover:bg-secondary/80"
               }`}
             onClick={() => handleBuy(pkg)}
             disabled={loadingPkg === pkg.credits}

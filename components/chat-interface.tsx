@@ -107,7 +107,7 @@ export function ChatInterface({
 
   // ... (JSX do return mantém igual) ...
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-dvh w-full bg-background flex flex-col overflow-hidden relative">
       {/* ... (Cabeçalho, ScrollArea, Input - tudo igual) ... */}
       <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">

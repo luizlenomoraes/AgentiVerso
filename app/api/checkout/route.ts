@@ -6,7 +6,7 @@ const client = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCE
 
 export async function POST(request: Request) {
   try {
-    const { price, credits, quantity = 1 } = await request.json()
+    const { packageId, quantity = 1 } = await request.json()
 
     const supabase = await getSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -15,15 +15,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
+    if (!packageId) {
+      return NextResponse.json({ error: "Pacote não especificado" }, { status: 400 })
+    }
+
+    // Buscar o pacote no banco para garantir preço e créditos corretos
+    const { data: pkg } = await supabase
+      .from("credit_packages")
+      .select("*")
+      .eq("id", packageId)
+      .single()
+
+    if (!pkg) {
+      return NextResponse.json({ error: "Pacote não encontrado" }, { status: 404 })
+    }
+
+    const price = pkg.price
+    const credits = pkg.amount
+
     // 1. Criar registro inicial na tabela transactions (Status: pending)
-    // Isso garante que temos um ID nosso para rastrear antes de ir pro Mercado Pago
     const { data: transaction, error: txError } = await supabase
       .from("transactions")
       .insert({
         user_id: user.id,
         amount: price,
         status: 'pending',
-        // external_id será atualizado depois ou usado como referência
+        external_id: `pkg_${packageId}` // Placeholder temporário
       })
       .select()
       .single()
@@ -35,7 +52,7 @@ export async function POST(request: Request) {
 
     // 2. Configurar Preferência do Mercado Pago
     const preference = new Preference(client)
-    
+
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
     const result = await preference.create({
