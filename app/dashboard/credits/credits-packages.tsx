@@ -6,21 +6,30 @@ import { Card } from "@/components/ui/card"
 import { Zap, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
-const creditPackages = [
-  { credits: 100, price: 10, popular: false },
-  { credits: 500, price: 45, popular: true },
-  { credits: 1000, price: 80, popular: false },
-  { credits: 5000, price: 350, popular: false },
-]
+type Package = {
+  id: string
+  name: string
+  amount: number
+  price: number
+  popular?: boolean
+}
 
-export function CreditsPackages() {
+export function CreditsPackages({ packages }: { packages: any[] }) {
+  // Se não vier pacotes do banco, usa fallback ou mostra mensagem
+  const displayPackages = packages.length > 0 ? packages.map((pkg: any) => ({
+    credits: pkg.amount,
+    price: pkg.price,
+    popular: pkg.name.toLowerCase().includes("popular") || pkg.name.toLowerCase().includes("plus"),
+    name: pkg.name
+  })) : []
+
   const [loadingPkg, setLoadingPkg] = useState<number | null>(null)
   const router = useRouter()
 
   const handleBuy = async (pkg: { credits: number, price: number }) => {
     try {
       setLoadingPkg(pkg.credits)
-      
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,14 +52,21 @@ export function CreditsPackages() {
     }
   }
 
+  if (displayPackages.length === 0) {
+    return (
+      <div className="text-center p-8 border border-dashed border-border rounded-lg">
+        <p className="text-muted-foreground">Nenhum pacote disponível no momento.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {creditPackages.map((pkg) => (
+      {displayPackages.map((pkg) => (
         <Card
           key={pkg.credits}
-          className={`p-6 space-y-6 bg-card/50 backdrop-blur border-border/50 relative ${
-            pkg.popular ? "border-primary ring-2 ring-primary/20" : ""
-          }`}
+          className={`p-6 space-y-6 bg-card/50 backdrop-blur border-border/50 relative ${pkg.popular ? "border-primary ring-2 ring-primary/20" : ""
+            }`}
         >
           {pkg.popular && (
             <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -76,11 +92,10 @@ export function CreditsPackages() {
           </div>
 
           <Button
-            className={`w-full ${
-              pkg.popular
+            className={`w-full ${pkg.popular
                 ? "bg-gradient-to-r from-primary to-accent hover:opacity-90"
                 : "bg-secondary hover:bg-secondary/80"
-            }`}
+              }`}
             onClick={() => handleBuy(pkg)}
             disabled={loadingPkg === pkg.credits}
           >

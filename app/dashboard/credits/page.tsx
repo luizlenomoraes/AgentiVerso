@@ -21,6 +21,13 @@ export default async function CreditsPage() {
 
   const availableCredits = (profile?.total_credits || 0) - (profile?.used_credits || 0)
 
+  // Buscar pacotes de créditos ativos
+  const { data: packages } = await supabase
+    .from("credit_packages")
+    .select("*")
+    .eq("active", true)
+    .order("price", { ascending: true })
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
@@ -51,8 +58,8 @@ export default async function CreditsPage() {
             </p>
           </div>
 
-          {/* Aqui entra o componente Client que criamos acima */}
-          <CreditsPackages />
+          {/* Passar pacotes para o componente */}
+          <CreditsPackages packages={packages || []} />
 
           <Card className="p-6 bg-card/50 backdrop-blur border-border/50">
             <div className="space-y-4">
