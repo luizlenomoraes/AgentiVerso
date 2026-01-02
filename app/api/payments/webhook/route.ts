@@ -34,6 +34,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ status: "ignored" }, { status: 200 })
         }
 
+        // MOCK PARA TESTE DO PAINEL MERCADO PAGO
+        if (dataId === "123456") {
+            console.log("Teste de integração do Mercado Pago recebido com sucesso!")
+            return NextResponse.json({ status: "ok", mode: "test_mode" }, { status: 200 })
+        }
+
         // Consultar o status real do pagamento no Mercado Pago (Segurança)
         const mpClient = getMercadoPagoClient()
         const payment = new Payment(mpClient)
