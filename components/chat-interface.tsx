@@ -29,18 +29,18 @@ type ChatInterfaceProps = {
   agent: Agent
   userId: string
   availableCredits: number
-  initialMessages?: Message[]       // <--- NOVO
-  initialConversationId?: string    // <--- NOVO
+  initialMessages?: Message[]
+  initialConversationId?: string | null
 }
 
-export function ChatInterface({ 
-  agent, 
-  userId, 
-  availableCredits, 
-  initialMessages = [], 
-  initialConversationId = null 
-}: ChatInterfaceProps) { // <--- Atualize a assinatura da função
-  
+export function ChatInterface({
+  agent,
+  userId,
+  availableCredits,
+  initialMessages = [],
+  initialConversationId = null
+}: ChatInterfaceProps) {
+
   // Inicialize o estado com as mensagens vindas do banco
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState("")
@@ -51,7 +51,7 @@ export function ChatInterface({
 
   // ... (O resto do código: useEffect scroll, handleSend, return...) 
   // O código restante permanece idêntico, apenas a inicialização mudou.
-  
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
@@ -92,7 +92,7 @@ export function ChatInterface({
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: data.response,
+        content: data.reply, // CORRIGIDO: API retorna "reply" não "response"
         created_at: new Date().toISOString(),
       }
 
@@ -108,8 +108,8 @@ export function ChatInterface({
   // ... (JSX do return mantém igual) ...
   return (
     <div className="min-h-screen bg-background flex flex-col">
-        {/* ... (Cabeçalho, ScrollArea, Input - tudo igual) ... */}
-        <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
+      {/* ... (Cabeçalho, ScrollArea, Input - tudo igual) ... */}
+      <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button asChild variant="ghost" size="icon">
@@ -127,9 +127,22 @@ export function ChatInterface({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
-            <span className="text-sm text-muted-foreground">Créditos:</span>
-            <span className="font-bold text-primary">{credits}</span>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setConversationId(null)
+                setMessages([])
+              }}
+              className="bg-transparent"
+            >
+              Nova Conversa
+            </Button>
+            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
+              <span className="text-sm text-muted-foreground">Créditos:</span>
+              <span className="font-bold text-primary">{credits}</span>
+            </div>
           </div>
         </div>
       </header>
@@ -157,11 +170,10 @@ export function ChatInterface({
                 </Avatar>
               )}
               <Card
-                className={`p-4 max-w-[80%] ${
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card/50 backdrop-blur border-border/50"
-                }`}
+                className={`p-4 max-w-[80%] ${message.role === "user"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card/50 backdrop-blur border-border/50"
+                  }`}
               >
                 <p className="text-sm whitespace-pre-wrap">{message.content}</p>
               </Card>
