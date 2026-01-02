@@ -19,7 +19,8 @@ export default async function CreditsPage() {
 
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
-  const availableCredits = (profile?.total_credits || 0) - (profile?.used_credits || 0)
+  const calculatedCredits = (profile?.total_credits || 0) - (profile?.used_credits || 0)
+  const availableCredits = Math.max(0, calculatedCredits)
 
   // Buscar pacotes de créditos ativos
   const { data: packages } = await supabase

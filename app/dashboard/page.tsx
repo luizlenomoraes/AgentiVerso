@@ -46,7 +46,8 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(50)
 
-  const availableCredits = (profile?.total_credits || 0) - (profile?.used_credits || 0)
+  const calculatedCredits = (profile?.total_credits || 0) - (profile?.used_credits || 0)
+  const availableCredits = Math.max(0, calculatedCredits)
 
   return (
     <div className="min-h-screen bg-background relative">

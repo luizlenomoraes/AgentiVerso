@@ -25,7 +25,7 @@ export default async function ChatPage(props: {
 
   // 2. Buscar Créditos
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-  const availableCredits = (profile?.total_credits || 0) - (profile?.used_credits || 0)
+  const availableCredits = Math.max(0, (profile?.total_credits || 0) - (profile?.used_credits || 0))
 
   // 3. BUSCAR HISTÓRICO DE CONVERSA
   let targetConversationId = searchParams.conversation
