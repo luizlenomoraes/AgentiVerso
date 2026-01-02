@@ -33,11 +33,12 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family: 'Rajdhani', sans-serif;
   }
 
@@ -55,7 +56,10 @@
 
   /* Efeito de vidro futurista */
   .glass-panel {
-    @apply bg-card/50 backdrop-blur-xl border border-border/30;
+    background-color: hsl(var(--card) / 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.3);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
 
@@ -91,18 +95,26 @@
 
   /* Tabs com indicador visual claro */
   [role="tablist"] button[data-state="active"] {
-    @apply bg-primary/20 text-primary border-primary/50;
+    background-color: hsl(var(--primary) / 0.2);
+    color: hsl(var(--primary));
+    border-color: hsl(var(--primary) / 0.5);
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
   }
 
   [role="tablist"] button[data-state="inactive"] {
-    @apply text-muted-foreground hover:text-foreground hover:bg-muted/50;
+    color: hsl(var(--muted-foreground));
     transition: all 0.3s ease;
+  }
+
+  [role="tablist"] button[data-state="inactive"]:hover {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--muted) / 0.5);
   }
 
   /* Botão de créditos destacado */
   .credits-badge {
-    @apply relative overflow-hidden;
+    position: relative;
+    overflow: hidden;
   }
 
   .credits-badge::after {
@@ -111,7 +123,10 @@
     right: -100%;
     top: 50%;
     transform: translateY(-50%);
-    @apply text-xs text-primary font-bold opacity-0;
+    font-size: 0.75rem;
+    color: hsl(var(--primary));
+    font-weight: 700;
+    opacity: 0;
     transition: all 0.3s ease;
   }
 
@@ -121,7 +136,7 @@
   }
 
   .credits-badge:hover {
-    @apply pr-24;
+    padding-right: 6rem;
   }
 
   /* Grid de fundo animado */
@@ -152,17 +167,19 @@
 
   /* Hover states melhorados */
   .card-hover {
-    @apply transition-all duration-300;
+    transition: all 0.3s;
   }
 
   .card-hover:hover {
-    @apply scale-105 shadow-2xl;
-    box-shadow: 0 0 30px hsl(var(--primary) / 0.2);
+    transform: scale(1.05);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 30px hsl(var(--primary) / 0.2);
   }
 
   /* Botões cyber */
   .cyber-button {
-    @apply relative overflow-hidden transition-all duration-300;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
   }
 
   .cyber-button:hover:not(:disabled) {
@@ -207,39 +224,43 @@
 
     /* Tabs responsivas */
     [role="tablist"] {
-      @apply flex-wrap;
+      flex-wrap: wrap;
     }
 
     [role="tablist"] button {
-      @apply flex-1 min-w-[120px] text-sm;
+      flex: 1 1 auto;
+      min-width: 120px;
+      font-size: 0.875rem;
     }
 
     /* Cards com menos padding */
     .glass-panel {
-      @apply p-4;
+      padding: 1rem;
     }
 
     /* Texto responsivo */
     h1 {
-      @apply text-xl;
+      font-size: 1.25rem;
     }
 
     h2 {
-      @apply text-lg;
+      font-size: 1.125rem;
     }
 
     /* Botões empilhados em mobile */
     .button-group-mobile {
-      @apply flex-col gap-2;
+      flex-direction: column;
+      gap: 0.5rem;
     }
 
     .button-group-mobile>* {
-      @apply w-full;
+      width: 100%;
     }
 
     /* Header fixo otimizado */
     header {
-      @apply py-3;
+      padding-top: 0.75rem;
+      padding-bottom: 0.75rem;
     }
 
     /* Scroll suave em elementos */
@@ -250,23 +271,23 @@
 
     /* Hide no mobile */
     .hide-mobile {
-      @apply hidden;
+      display: none;
     }
 
     /* Show apenas em mobile */
     .show-mobile {
-      @apply block;
+      display: block;
     }
   }
 
   /* Desktop */
   @media (min-width: 769px) {
     .hide-desktop {
-      @apply hidden;
+      display: none;
     }
 
     .show-mobile {
-      @apply hidden;
+      display: none;
     }
   }
 }
