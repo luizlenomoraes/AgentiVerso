@@ -44,7 +44,7 @@ NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY=TEST-xxx
 NEXT_PUBLIC_APP_URL=https://agentiverso.saas.luizleno.com.br
 
 # Chaves de IA (OPCIONAL - pode configurar via Admin)
-GEMINI_API_KEY=AIzaSyBVxBBrcZDIUyV7hGTqXdVz95ETt6ZHulI
+GEMINI_API_KEY=sua_chave_gemini_aqui
 # OPENAI_API_KEY=sk-...
 # CLAUDE_API_KEY=sk-ant-...
 # GROK_API_KEY=xai-...
@@ -70,7 +70,7 @@ npm run build
 
 1. **Acesse o admin:** https://agentiverso.saas.luizleno.com.br/admin/settings
 2. **Configure o Provider:** Selecione "Google Gemini"
-3. **Cole a chave API:** AIzaSyBVxBBrcZDIUyV7hGTqXdVz95ETt6ZHulI
+3. **Cole a chave API:** (sua chave API do Google AI Studio)
 4. **Clique em "🔄 Recarregar"** para carregar modelos
 5. **Selecione o modelo:** models/gemini-2.5-flash
 6. **Salve**
