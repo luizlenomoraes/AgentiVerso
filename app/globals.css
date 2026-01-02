@@ -1,293 +1,327 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@300;500;700&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --neon-cyan: 180 100% 50%;
-    --neon-pink: 320 100% 50%;
-    --background: 222 47% 11%;
-    --foreground: 180 100% 97%;
-    --card: 222 50% 14%;
-    --card-foreground: 180 100% 97%;
-    --popover: 222 50% 14%;
-    --popover-foreground: 180 100% 97%;
-    --primary: 180 100% 50%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 320 100% 50%;
-    --secondary-foreground: 180 100% 97%;
-    --muted: 222 30% 25%;
-    --muted-foreground: 180 30% 70%;
-    --accent: 320 100% 50%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 222 30% 30%;
-    --input: 222 30% 30%;
-    --ring: 180 100% 50%;
-    --radius: 0.75rem;
+/* =========================================== */
+/* TEMA CYBERPUNK - TAILWIND V4               */
+/* =========================================== */
+
+@theme {
+  /* Cores Neon */
+  --color-neon-cyan: #00fff9;
+  --color-neon-pink: #ff00c1;
+  --color-dark-bg: #050a18;
+
+  /* Sistema de cores shadcn - CONTRASTE MELHORADO */
+  --color-background: #0a1128;
+  --color-foreground: #ffffff;
+  --color-card: #0f172a;
+  --color-card-foreground: #ffffff;
+  --color-popover: #0f172a;
+  --color-popover-foreground: #ffffff;
+  --color-primary: #00fff9;
+  --color-primary-foreground: #050a18;
+  --color-secondary: #ff00c1;
+  --color-secondary-foreground: #ffffff;
+  --color-muted: #1e293b;
+  --color-muted-foreground: #cbd5e1;
+  --color-accent: #ff00c1;
+  --color-accent-foreground: #050a18;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #2d4a6f;
+  --color-input: #2d4a6f;
+  --color-ring: #00fff9;
+
+  /* Radius */
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+}
+
+/* =========================================== */
+/* ESTILOS BASE                               */
+/* =========================================== */
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(0, 255, 249, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(255, 0, 193, 0.1) 0%, transparent 40%);
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* =========================================== */
+/* COMPONENTES CYBERPUNK                      */
+/* =========================================== */
+
+/* Efeito de vidro futurista */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 255, 249, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Bordas brilhantes animadas */
+.neon-border {
+  position: relative;
+  z-index: 1;
+}
+
+.neon-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(45deg, var(--color-neon-cyan), transparent, var(--color-neon-pink), transparent, var(--color-neon-cyan));
+  background-size: 400%;
+  border-radius: inherit;
+  animation: neon-glow 20s linear infinite;
+  opacity: 0.5;
+  z-index: -1;
+}
+
+@keyframes neon-glow {
+
+  0%,
+  100% {
+    background-position: 0 0;
+  }
+
+  50% {
+    background-position: 400% 0;
   }
 }
 
-@layer base {
-  * {
-    border-color: hsl(var(--border));
+/* Inputs futuristas */
+input,
+textarea,
+select {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-foreground) !important;
+  transition: all 0.3s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-neon-cyan) !important;
+  box-shadow: 0 0 15px rgba(0, 255, 249, 0.3) !important;
+  outline: none !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-muted-foreground);
+  opacity: 0.6;
+}
+
+/* Botões Neon */
+button {
+  transition: all 0.3s ease;
+}
+
+button:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(0, 255, 249, 0.4);
+}
+
+/* Cards */
+.card,
+[class*="Card"] {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(0, 255, 249, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+/* Tabs com indicador visual */
+[role="tablist"] {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+}
+
+[role="tablist"] button {
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+[role="tablist"] button[data-state="active"] {
+  background-color: var(--color-neon-cyan) !important;
+  color: var(--color-dark-bg) !important;
+  box-shadow: 0 0 20px rgba(0, 255, 249, 0.5);
+}
+
+[role="tablist"] button[data-state="inactive"] {
+  color: var(--color-muted-foreground);
+}
+
+[role="tablist"] button[data-state="inactive"]:hover {
+  color: var(--color-foreground);
+  background-color: rgba(0, 255, 249, 0.1);
+}
+
+/* Grid de fundo animado */
+.cyber-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 200%;
+  background-image:
+    linear-gradient(rgba(0, 255, 249, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 249, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  transform: perspective(500px) rotateX(60deg) translateY(-100px);
+  animation: grid-move 20s linear infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes grid-move {
+  0% {
+    transform: perspective(500px) rotateX(60deg) translateY(0);
   }
 
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: 'Rajdhani', sans-serif;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: 'Orbitron', sans-serif;
+  100% {
+    transform: perspective(500px) rotateX(60deg) translateY(50px);
   }
 }
 
-@layer components {
+/* Botão de créditos com efeito */
+.credits-badge {
+  position: relative;
+  overflow: hidden;
+}
 
-  /* Efeito de vidro futurista */
-  .glass-panel {
-    background-color: hsl(var(--card) / 0.5);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--border) / 0.3);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+.credits-badge::after {
+  content: '→ Comprar';
+  position: absolute;
+  right: -100%;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.75rem;
+  color: var(--color-neon-cyan);
+  font-weight: 700;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.credits-badge:hover::after {
+  right: 12px;
+  opacity: 1;
+}
+
+.credits-badge:hover {
+  padding-right: 5rem;
+}
+
+/* Pulse de atenção */
+.attention-pulse {
+  animation: attention-pulse 2s ease-in-out infinite;
+}
+
+@keyframes attention-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 249, 0.7);
   }
 
-  /* Bordas brilhantes animadas */
-  .neon-border {
-    position: relative;
-    z-index: 1;
+  50% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 249, 0);
+  }
+}
+
+/* Card hover */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(0, 255, 249, 0.2);
+}
+
+/* Links */
+a {
+  color: var(--color-neon-cyan);
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-neon-pink);
+  text-shadow: 0 0 10px var(--color-neon-pink);
+}
+
+/* Headers */
+header {
+  background: rgba(10, 17, 40, 0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 255, 249, 0.2);
+}
+
+/* =========================================== */
+/* RESPONSIVIDADE MOBILE                      */
+/* =========================================== */
+
+@media (max-width: 768px) {
+
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
   }
 
-  .neon-border::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    background: linear-gradient(45deg, hsl(var(--primary)), transparent, hsl(var(--accent)), transparent, hsl(var(--primary)));
-    background-size: 400%;
-    border-radius: inherit;
-    animation: neon-glow 20s linear infinite;
-    opacity: 0.4;
-    z-index: -1;
-  }
-
-  @keyframes neon-glow {
-
-    0%,
-    100% {
-      background-position: 0 0;
-    }
-
-    50% {
-      background-position: 400% 0;
-    }
-  }
-
-  /* Tabs com indicador visual claro */
-  [role="tablist"] button[data-state="active"] {
-    background-color: hsl(var(--primary) / 0.2);
-    color: hsl(var(--primary));
-    border-color: hsl(var(--primary) / 0.5);
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
-  }
-
-  [role="tablist"] button[data-state="inactive"] {
-    color: hsl(var(--muted-foreground));
-    transition: all 0.3s ease;
-  }
-
-  [role="tablist"] button[data-state="inactive"]:hover {
-    color: hsl(var(--foreground));
-    background-color: hsl(var(--muted) / 0.5);
-  }
-
-  /* Botão de créditos destacado */
-  .credits-badge {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .credits-badge::after {
-    content: '→ Comprar';
-    position: absolute;
-    right: -100%;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.75rem;
-    color: hsl(var(--primary));
-    font-weight: 700;
-    opacity: 0;
-    transition: all 0.3s ease;
-  }
-
-  .credits-badge:hover::after {
-    right: 12px;
-    opacity: 1;
-  }
-
-  .credits-badge:hover {
-    padding-right: 6rem;
-  }
-
-  /* Grid de fundo animado */
   .cyber-grid {
-    position: fixed;
-    inset: 0;
-    width: 200%;
-    height: 200%;
-    background-image:
-      linear-gradient(hsl(var(--primary) / 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--primary) / 0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
-    transform: perspective(500px) rotateX(60deg) translateY(-100px);
-    animation: grid-move 20s linear infinite;
-    z-index: 0;
-    pointer-events: none;
+    opacity: 0.3;
   }
 
-  @keyframes grid-move {
-    0% {
-      transform: perspective(500px) rotateX(60deg) translateY(0);
-    }
-
-    100% {
-      transform: perspective(500px) rotateX(60deg) translateY(50px);
-    }
+  [role="tablist"] {
+    flex-wrap: wrap;
   }
 
-  /* Hover states melhorados */
-  .card-hover {
-    transition: all 0.3s;
+  [role="tablist"] button {
+    flex: 1 1 auto;
+    min-width: 100px;
+    font-size: 0.875rem;
   }
 
-  .card-hover:hover {
-    transform: scale(1.05);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 30px hsl(var(--primary) / 0.2);
+  h1 {
+    font-size: 1.5rem;
   }
 
-  /* Botões cyber */
-  .cyber-button {
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s;
+  h2 {
+    font-size: 1.25rem;
   }
 
-  .cyber-button:hover:not(:disabled) {
-    box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+  .hide-mobile {
+    display: none;
   }
+}
 
-  /* Pulse de atenção */
-  .attention-pulse {
-    animation: attention-pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes attention-pulse {
-
-    0%,
-    100% {
-      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
-    }
-
-    50% {
-      box-shadow: 0 0 0 10px hsl(var(--primary) / 0);
-    }
-  }
-
-  /* ============================================ */
-  /* RESPONSIVIDADE MOBILE */
-  /* ============================================ */
-
-  /* Touch targets maiores */
-  @media (max-width: 768px) {
-
-    button,
-    a,
-    [role="button"] {
-      min-height: 44px;
-      min-width: 44px;
-    }
-
-    /* Grid de fundo menos intenso em mobile */
-    .cyber-grid {
-      opacity: 0.3;
-    }
-
-    /* Tabs responsivas */
-    [role="tablist"] {
-      flex-wrap: wrap;
-    }
-
-    [role="tablist"] button {
-      flex: 1 1 auto;
-      min-width: 120px;
-      font-size: 0.875rem;
-    }
-
-    /* Cards com menos padding */
-    .glass-panel {
-      padding: 1rem;
-    }
-
-    /* Texto responsivo */
-    h1 {
-      font-size: 1.25rem;
-    }
-
-    h2 {
-      font-size: 1.125rem;
-    }
-
-    /* Botões empilhados em mobile */
-    .button-group-mobile {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .button-group-mobile>* {
-      width: 100%;
-    }
-
-    /* Header fixo otimizado */
-    header {
-      padding-top: 0.75rem;
-      padding-bottom: 0.75rem;
-    }
-
-    /* Scroll suave em elementos */
-    .mobile-scroll {
-      -webkit-overflow-scrolling: touch;
-      scroll-behavior: smooth;
-    }
-
-    /* Hide no mobile */
-    .hide-mobile {
-      display: none;
-    }
-
-    /* Show apenas em mobile */
-    .show-mobile {
-      display: block;
-    }
-  }
-
-  /* Desktop */
-  @media (min-width: 769px) {
-    .hide-desktop {
-      display: none;
-    }
-
-    .show-mobile {
-      display: none;
-    }
+@media (min-width: 769px) {
+  .hide-desktop {
+    display: none;
   }
 }
