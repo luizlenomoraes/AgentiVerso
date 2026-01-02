@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // output: 'standalone', // Removido para compatibilidade com npm start no Coolify
   typescript: {
     ignoreBuildErrors: true,
   },
