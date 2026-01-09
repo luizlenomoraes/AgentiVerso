@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { ServiceWorkerRegistration } from "@/components/service-worker-registration"
 import "./globals.css"
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist" })
@@ -11,6 +12,13 @@ export const metadata: Metadata = {
   title: "AgentiVerso - Ecossistema de Agentes de IA",
   description: "Converse com agentes de IA especializados potencializados por RAG",
   generator: "v0.app",
+  manifest: "/manifest.json",
+  themeColor: "#7c3aed",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "AgentiVerso",
+  },
   icons: {
     icon: [
       {
@@ -40,7 +48,9 @@ export default function RootLayout({
       <body className={`${geist.variable} ${geistMono.variable} antialiased`}>
         {children}
         <Analytics />
+        <ServiceWorkerRegistration />
       </body>
     </html>
   )
 }
+
