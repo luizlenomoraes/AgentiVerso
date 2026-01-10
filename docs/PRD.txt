@@ -5,110 +5,138 @@ Eu já forneci o schema atual do banco de dados. NÃO apague tabelas existentes.
 
 Siga este plano de execução sequencial:
 
-### FASE 1: CLEANUP (Remoção do Mercado Pago)
+### FASE 1: CLEANUP (Remoção do Mercado Pago) ✅
 1.  Desinstale o pacote `mercadopago`: `npm uninstall mercadopago`.
 2.  Exclua o arquivo de webhook antigo: `rm app/api/webhooks/mercadopago/route.ts`.
 3.  Limpe o conteúdo de `app/api/checkout/route.ts` (vamos reescrever do zero).
 
 ---
 
-### FASE 2: BANCO DE DADOS (Supabase SQL)
-Baseado no schema que possuímos, precisamos adicionar colunas para suportar o Upsell 1-Clique no futuro.
-Gere e instrua a execução do seguinte SQL no Supabase:
+### FASE 2: BANCO DE DADOS (Supabase SQL) ✅
 
+#### 2.1 Preparação para Appmax e 1-Click Upsell
 ```sql
--- Preparação para Appmax e 1-Click Upsell
 ALTER TABLE profiles 
 ADD COLUMN IF NOT EXISTS appmax_customer_id text,
-ADD COLUMN IF NOT EXISTS last_payment_token text, -- O "Ouro" do Upsell
+ADD COLUMN IF NOT EXISTS last_payment_token text,
 ADD COLUMN IF NOT EXISTS last_payment_brand text;
 
 ALTER TABLE transactions
-ADD COLUMN IF NOT EXISTS appmax_order_id text, -- ID único da Appmax
-ADD COLUMN IF NOT EXISTS payment_method text; -- ex: 'credit_card', 'pix'
+ADD COLUMN IF NOT EXISTS appmax_order_id text,
+ADD COLUMN IF NOT EXISTS payment_method text;
+```
 
+#### 2.2 Sistema de Monetização Híbrida (NOVO)
+```sql
+-- Campos de monetização nos agentes
+ALTER TABLE agents 
+ADD COLUMN IF NOT EXISTS is_free BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS price DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS bonus_credits INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
+
+-- Controle de acesso premium
+CREATE TABLE IF NOT EXISTS user_agent_access (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+    purchased_at TIMESTAMPTZ DEFAULT NOW(),
+    transaction_id UUID REFERENCES transactions(id),
+    UNIQUE(user_id, agent_id)
+);
+
+-- Combos promocionais
+CREATE TABLE IF NOT EXISTS agent_combos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL,
+    original_price DECIMAL(10,2),
+    bonus_credits INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    valid_until TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS combo_agents (
+    combo_id UUID NOT NULL REFERENCES agent_combos(id) ON DELETE CASCADE,
+    agent_id UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+    PRIMARY KEY (combo_id, agent_id)
+);
+
+-- Suporte a tipos de transação
+ALTER TABLE transactions
+ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'credits',
+ADD COLUMN IF NOT EXISTS agent_id UUID REFERENCES agents(id),
+ADD COLUMN IF NOT EXISTS combo_id UUID REFERENCES agent_combos(id);
 ```
 
 ---
 
-### FASE 3: BACKEND & INTEGRAÇÃO APPMAX
+### FASE 3: BACKEND & INTEGRAÇÃO APPMAX ✅
 
-Crie um arquivo `lib/appmax.ts` para centralizar a lógica. Como não há SDK, use `fetch`.
+Arquivo `lib/appmax.ts` criado com:
+- OAuth2 authentication
+- Endpoints: customers, orders, payments (PIX)
+- Ambiente sandbox/produção configurável
 
-**Documentação Simulada da Appmax (Para Contexto):**
-
-* **Base URL:** `https://admin.appmax.com.br/api/v3`
-* **Auth:** Header `access-token: process.env.APPMAX_API_KEY`
-* **Criar Pedido (`POST /orders`):**
-* Payload deve incluir `customer` (com `cpf`, `phone` vindos da tabela `profiles` se existirem).
-* Retorno: `{ "data": { "id": "12345", "checkout_url": "..." } }`.
-
-
-* **Webhook (`POST`):**
-* Evento `order.paid`.
-* O payload contém `data.customer.id` e `data.payment.token`. **CRUCIAL:** Precisamos salvar esses dois valores no `profiles` do usuário para permitir compras futuras sem digitar cartão.
-
-
-
-**Tarefa 3.1: Reescrever `app/api/checkout/route.ts**`
-
-1. Receba `{ packageId }`.
-2. Busque o usuário no Supabase (`profiles`) para pegar Nome, Email, CPF e Telefone.
-3. Busque o pacote (`credit_packages`) para pegar o preço.
-4. Chame a API da Appmax criando o pedido.
-* *Dica:* Se o usuário não tiver CPF/Phone no perfil, envie strings vazias ou dados genéricos permitidos, mas tente preencher.
-
-
-5. Salve o registro em `transactions` com status `pending`.
-6. Retorne `{ url: checkout_url }`.
-
-**Tarefa 3.2: Criar Webhook `app/api/webhooks/appmax/route.ts**`
-
-1. Valide se o evento é `order.paid`.
-2. Identifique a transação local (via `metadata` enviada no checkout ou cruzando IDs).
-3. Atualize `transactions` para `approved`.
-4. Incremente os créditos do usuário em `profiles`.
-5. **Lógica de Upsell:** Atualize a tabela `profiles` salvando o `appmax_customer_id` e o `last_payment_token` recebidos no webhook.
+**Variáveis de ambiente necessárias:**
+- `APPMAX_CLIENT_ID`
+- `APPMAX_CLIENT_SECRET`
+- `APPMAX_SANDBOX` (true/false)
 
 ---
 
-### FASE 4: TRANSFORMAÇÃO PWA (Progressive Web App)
+### FASE 4: TRANSFORMAÇÃO PWA ✅
 
-1. Instale: `npm install @ducanh2912/next-pwa` (Compatível com Next 16).
-2. Atualize `next.config.mjs`:
-```javascript
-import withPWA from "@ducanh2912/next-pwa";
+Implementado com service worker vanilla:
+- `public/sw.js` - Service worker básico
+- `public/manifest.json` - Configuração PWA
+- `components/service-worker-registration.tsx` - Registro do SW
 
-const pwaConfig = withPWA({
-  dest: "public",
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
-  swcMinify: true,
-  disable: process.env.NODE_ENV === "development",
-  workboxOptions: {
-    disableDevLogs: true,
-  },
-});
+---
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // mantenha suas configs existentes aqui
-};
+### FASE 5: UI REDESIGN FUTURISTA ✅
 
-export default pwaConfig(nextConfig);
+Componentes criados:
+- `Sidebar` - Navegação lateral colapsável
+- `CreditCounter` - Contador animado de créditos
+- `AgentAvatar` - Avatar com status e modo locked
+- `CategoryFilter` - Filtro de categorias funcional
+- `DashboardContent` - Dashboard com agentes bloqueados
 
-```
+Estilo:
+- Tema Cyberpunk com cores neon (cyan/pink)
+- Scrollbar customizado
+- Animações (scan-line, gradient-x, glow-pulse)
 
+---
 
-3. Verifique se `public/manifest.json` existe. Se não, crie um básico apontando para os ícones que já estão na pasta `public` (vi que existem icon.svg e outros).
+### FASE 6: SISTEMA DE MONETIZAÇÃO ✅ (Fase 1 concluída)
+
+**Admin atualizado:**
+- `/admin/agents/[id]` - Campos: is_free, price, bonus_credits, is_public, is_featured
+- `/admin/agents/new` - Mesmos campos para novos agentes
+- `/admin/combos` - CRUD completo de combos promocionais
+
+**Dashboard:**
+- Agentes premium aparecem com cadeado (grayscale)
+- Botão "Desbloquear Acesso" redireciona para compra
+
+**Próximos passos (Fase 2):**
+- [ ] Backend de compra de agente (`/api/checkout` type='agent')
+- [ ] Webhook libera acesso e credita bônus
+- [ ] Modal de compra de agente no dashboard
 
 ---
 
 ### CHECKLIST DE FINALIZAÇÃO
 
-* [ ] O código deve tratar erros de API da Appmax (try/catch).
-* [ ] O Webhook deve retornar status 200 rápido para a Appmax não reenviar.
-* [ ] Verifique se as variáveis de ambiente estão sendo chamadas corretamente (`process.env.APPMAX_API_KEY`).
-
-Gere os arquivos necessários agora.
+* [x] O código trata erros de API da Appmax (try/catch).
+* [x] O Webhook retorna status 200 rápido.
+* [x] Variáveis de ambiente configuráveis.
+* [x] Login/Signup redirect funcionando.
+* [x] UI futurista implementada.
+* [x] Admin com campos de monetização.
+* [ ] Compra de agente premium funcionando.
+* [ ] Compra de combo funcionando.

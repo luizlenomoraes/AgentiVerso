@@ -2,10 +2,12 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AgentAvatar } from "@/components/agent-avatar"
+import { AgentPurchaseModal } from "@/components/agent-purchase-modal"
 import { cn } from "@/lib/utils"
 import {
     Bot,
@@ -23,7 +25,9 @@ interface Agent {
     description: string
     photo_url: string | null
     categories: { id: string; name: string; slug: string } | null
-    is_free?: boolean // true = free for all, false/undefined = requires access
+    is_free?: boolean
+    price?: number
+    bonus_credits?: number
 }
 
 interface Category {
@@ -58,7 +62,9 @@ export function DashboardContent({
     availableCredits,
     userAgentAccess = []
 }: DashboardContentProps) {
+    const router = useRouter()
     const [activeCategory, setActiveCategory] = useState<string | null>(null)
+    const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
 
     // Helper to check if user has access to an agent
     const hasAccess = (agent: Agent) => {
@@ -227,14 +233,12 @@ export function DashboardContent({
 
                                     {isLocked ? (
                                         <Button
-                                            asChild
                                             variant="outline"
+                                            onClick={() => setSelectedAgent(agent)}
                                             className="w-full border-border/50 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30"
                                         >
-                                            <Link href="/dashboard/credits" className="flex items-center justify-center gap-2">
-                                                <Lock className="w-4 h-4" />
-                                                Desbloquear Acesso
-                                            </Link>
+                                            <Lock className="w-4 h-4 mr-2" />
+                                            Desbloquear Acesso
                                         </Button>
                                     ) : (
                                         <Button
@@ -307,6 +311,19 @@ export function DashboardContent({
                         ))}
                     </div>
                 </section>
+            )}
+
+            {/* Purchase Modal */}
+            {selectedAgent && (
+                <AgentPurchaseModal
+                    agent={selectedAgent}
+                    isOpen={!!selectedAgent}
+                    onClose={() => setSelectedAgent(null)}
+                    onSuccess={() => {
+                        setSelectedAgent(null)
+                        router.refresh()
+                    }}
+                />
             )}
         </div>
     )

@@ -4,15 +4,12 @@ import { NextResponse } from "next/server"
 /**
  * Webhook para receber notificações da Appmax
  * 
- * Eventos tratados (baseado na documentação oficial):
- * - order_paid: Pedido pago
- * - order_approved: Pedido aprovado
- * - order_paid_by_pix: Pix pago
- * - order_refund: Pedido estornado
- * - order_up_sold: Upsell pago
+ * Suporta 3 tipos de transação:
+ * - credits: adiciona créditos comprados
+ * - agent: libera acesso ao agente + bônus credits
+ * - combo: libera acesso a todos agentes do combo + bônus credits
  */
 
-// Lazy initialization para evitar erros de build
 function getSupabaseAdmin() {
     return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +17,6 @@ function getSupabaseAdmin() {
     )
 }
 
-// Interface do payload do webhook Appmax (baseado na documentação)
 interface AppmaxWebhookPayload {
     event: string;
     event_type: string;
@@ -48,7 +44,6 @@ interface AppmaxWebhookPayload {
     };
 }
 
-// Eventos que indicam pagamento aprovado
 const APPROVED_EVENTS = [
     "order_paid",
     "order_approved",
@@ -56,15 +51,8 @@ const APPROVED_EVENTS = [
     "order_integrated",
 ];
 
-// Eventos que indicam estorno
-const REFUND_EVENTS = [
-    "order_refund",
-];
-
-// Eventos de upsell
-const UPSELL_EVENTS = [
-    "order_up_sold",
-];
+const REFUND_EVENTS = ["order_refund"];
+const UPSELL_EVENTS = ["order_up_sold"];
 
 export async function POST(request: Request) {
     try {
@@ -75,36 +63,32 @@ export async function POST(request: Request) {
         const supabaseAdmin = getSupabaseAdmin()
         const orderId = payload.data.order?.id
 
-        // Validar se temos o order_id
         if (!orderId) {
             console.log("[Appmax Webhook] Sem order_id no payload")
-            // Retorna 200 para não causar reenvios
             return NextResponse.json({ status: "ignored", reason: "no_order_id" })
         }
 
-        // Buscar transação pelo appmax_order_id
+        // Buscar transação
         const { data: transaction, error: txFindError } = await supabaseAdmin
             .from("transactions")
-            .select("*, profiles!inner(id, credits)")
+            .select("*")
             .eq("appmax_order_id", String(orderId))
             .single()
 
         if (txFindError || !transaction) {
             console.log("[Appmax Webhook] Transação não encontrada para order:", orderId)
-            // Retorna 200 para não causar reenvios
             return NextResponse.json({ status: "ignored", reason: "transaction_not_found" })
         }
 
         // Processar eventos de aprovação
         if (APPROVED_EVENTS.includes(payload.event)) {
-            // Verificar se já foi processado (evitar duplicação de créditos)
             if (transaction.status === "approved") {
                 console.log("[Appmax Webhook] Transação já processada:", orderId)
                 return NextResponse.json({ status: "already_processed" })
             }
 
             // 1. Atualizar transação para approved
-            const { error: txUpdateError } = await supabaseAdmin
+            await supabaseAdmin
                 .from("transactions")
                 .update({
                     status: "approved",
@@ -112,87 +96,152 @@ export async function POST(request: Request) {
                 })
                 .eq("id", transaction.id)
 
-            if (txUpdateError) {
-                console.error("[Appmax Webhook] Erro ao atualizar transação:", txUpdateError)
-                return NextResponse.json({ status: "error", message: "DB Error" })
+            // 2. Processar baseado no tipo de transação
+            const txType = transaction.type || 'credits'
+            let creditsToAdd = 0
+            let actionResult = ''
+
+            if (txType === 'credits') {
+                // Compra de pacote de créditos
+                const { data: pkg } = await supabaseAdmin
+                    .from("credit_packages")
+                    .select("amount")
+                    .eq("price", transaction.amount)
+                    .single()
+
+                creditsToAdd = pkg?.amount || 0
+                actionResult = `${creditsToAdd} créditos adicionados`
+
+            } else if (txType === 'agent' && transaction.agent_id) {
+                // Compra de agente premium
+
+                // Buscar bônus do agente
+                const { data: agent } = await supabaseAdmin
+                    .from("agents")
+                    .select("bonus_credits, name")
+                    .eq("id", transaction.agent_id)
+                    .single()
+
+                creditsToAdd = agent?.bonus_credits || 0
+
+                // Conceder acesso ao agente
+                const { error: accessError } = await supabaseAdmin
+                    .from("user_agent_access")
+                    .insert({
+                        user_id: transaction.user_id,
+                        agent_id: transaction.agent_id,
+                        transaction_id: transaction.id,
+                    })
+
+                if (accessError && !accessError.message.includes('duplicate')) {
+                    console.error("[Appmax Webhook] Erro ao conceder acesso:", accessError)
+                }
+
+                actionResult = `Acesso ao agente "${agent?.name}" liberado + ${creditsToAdd} créditos bônus`
+
+            } else if (txType === 'combo' && transaction.combo_id) {
+                // Compra de combo
+
+                // Buscar combo e seus agentes
+                const { data: combo } = await supabaseAdmin
+                    .from("agent_combos")
+                    .select("bonus_credits, name")
+                    .eq("id", transaction.combo_id)
+                    .single()
+
+                const { data: comboAgents } = await supabaseAdmin
+                    .from("combo_agents")
+                    .select("agent_id")
+                    .eq("combo_id", transaction.combo_id)
+
+                creditsToAdd = combo?.bonus_credits || 0
+
+                // Conceder acesso a todos os agentes do combo
+                if (comboAgents && comboAgents.length > 0) {
+                    const accessInserts = comboAgents.map((ca: { agent_id: string }) => ({
+                        user_id: transaction.user_id,
+                        agent_id: ca.agent_id,
+                        transaction_id: transaction.id,
+                    }))
+
+                    const { error: accessError } = await supabaseAdmin
+                        .from("user_agent_access")
+                        .insert(accessInserts)
+
+                    if (accessError && !accessError.message.includes('duplicate')) {
+                        console.error("[Appmax Webhook] Erro ao conceder acesso combo:", accessError)
+                    }
+                }
+
+                actionResult = `Combo "${combo?.name}" liberado (${comboAgents?.length || 0} agentes) + ${creditsToAdd} créditos bônus`
             }
 
-            // 2. Calcular créditos a adicionar
-            // Buscar o pacote pela transação ou calcular pelo amount
-            const { data: pkg } = await supabaseAdmin
-                .from("credit_packages")
-                .select("amount")
-                .eq("price", transaction.amount)
-                .single()
-
-            const creditsToAdd = pkg?.amount || 0
-
+            // 3. Adicionar créditos (se houver)
             if (creditsToAdd > 0) {
-                // 3. Incrementar créditos do usuário
-                const currentCredits = transaction.profiles?.credits || 0
-                const newCredits = currentCredits + creditsToAdd
+                // Buscar créditos atuais
+                const { data: profile } = await supabaseAdmin
+                    .from("profiles")
+                    .select("total_credits")
+                    .eq("id", transaction.user_id)
+                    .single()
 
-                const { error: profileUpdateError } = await supabaseAdmin
+                const currentCredits = profile?.total_credits || 0
+
+                await supabaseAdmin
                     .from("profiles")
                     .update({
-                        credits: newCredits,
-                        // Dados para 1-Click Upsell
+                        total_credits: currentCredits + creditsToAdd,
                         appmax_customer_id: payload.data.customer?.id ? String(payload.data.customer.id) : null,
                         last_payment_token: payload.data.payment?.upsell_hash || null,
                         last_payment_brand: payload.data.payment?.card?.brand || null,
                     })
                     .eq("id", transaction.user_id)
-
-                if (profileUpdateError) {
-                    console.error("[Appmax Webhook] Erro ao atualizar perfil:", profileUpdateError)
-                    return NextResponse.json({ status: "error", message: "Profile update error" })
-                }
-
-                console.log(`[Appmax Webhook] Sucesso! User ${transaction.user_id} recebeu ${creditsToAdd} créditos.`)
             }
 
-            return NextResponse.json({ status: "ok", action: "credits_added" })
+            console.log(`[Appmax Webhook] Sucesso! ${actionResult}`)
+            return NextResponse.json({ status: "ok", action: actionResult })
         }
 
-        // Processar eventos de estorno
+        // Processar estorno
         if (REFUND_EVENTS.includes(payload.event)) {
-            const { error: txUpdateError } = await supabaseAdmin
+            await supabaseAdmin
                 .from("transactions")
                 .update({ status: "refunded" })
                 .eq("id", transaction.id)
 
-            if (txUpdateError) {
-                console.error("[Appmax Webhook] Erro ao atualizar estorno:", txUpdateError)
+            // Se foi compra de agente/combo, revogar acesso
+            if (transaction.type === 'agent' && transaction.agent_id) {
+                await supabaseAdmin
+                    .from("user_agent_access")
+                    .delete()
+                    .eq("transaction_id", transaction.id)
             }
 
             console.log(`[Appmax Webhook] Estorno registrado para order: ${orderId}`)
             return NextResponse.json({ status: "ok", action: "refund_registered" })
         }
 
-        // Processar upsell
+        // Upsell
         if (UPSELL_EVENTS.includes(payload.event)) {
             console.log(`[Appmax Webhook] Upsell detectado para order: ${orderId}`)
-            // Lógica de upsell pode ser adicionada aqui
             return NextResponse.json({ status: "ok", action: "upsell_detected" })
         }
 
-        // Evento não tratado
         console.log(`[Appmax Webhook] Evento ignorado: ${payload.event}`)
         return NextResponse.json({ status: "ignored", event: payload.event })
 
     } catch (error) {
         console.error("[Appmax Webhook] Erro:", error)
-        // Retorna 200 mesmo em erro para evitar loops de reenvio
         return NextResponse.json({ status: "error", message: "Internal error" })
     }
 }
 
-// Método GET para verificar se o webhook está ativo
 export async function GET() {
     return NextResponse.json({
         status: "active",
         message: "Appmax webhook endpoint is ready",
         sandbox: process.env.APPMAX_SANDBOX === "true",
+        supported_types: ["credits", "agent", "combo"],
         events_handled: [...APPROVED_EVENTS, ...REFUND_EVENTS, ...UPSELL_EVENTS],
     })
 }

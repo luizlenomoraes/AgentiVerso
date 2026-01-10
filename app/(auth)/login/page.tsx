@@ -31,6 +31,8 @@ export default function LoginPage() {
       setError(error.message)
       setLoading(false)
     } else {
+      // Force refresh to update server-side auth state before navigating
+      router.refresh()
       router.push("/dashboard")
     }
   }

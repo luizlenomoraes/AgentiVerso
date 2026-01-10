@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Plus, Users, Bot, Settings, Loader2, CreditCard } from "lucide-react"
+import { ArrowLeft, Plus, Users, Bot, Settings, Loader2, CreditCard, Package } from "lucide-react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { AgentActions, UserActions } from "@/components/admin/admin-actions"
 
@@ -109,6 +109,12 @@ export default function AdminPage() {
             </h1>
           </div>
           <div className="flex gap-2">
+            <Button asChild variant="outline" className="bg-transparent border-accent/30 text-accent hover:bg-accent/10">
+              <Link href="/admin/combos">
+                <Package className="w-4 h-4 mr-2" />
+                Combos
+              </Link>
+            </Button>
             <Button asChild variant="outline" className="bg-transparent">
               <Link href="/admin/plans">
                 <CreditCard className="w-4 h-4 mr-2" />

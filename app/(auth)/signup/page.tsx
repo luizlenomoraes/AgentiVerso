@@ -115,6 +115,7 @@ export default function SignupPage() {
     } else if (data.user) {
       setSuccess(true)
       setTimeout(() => {
+        router.refresh()
         router.push("/dashboard")
       }, 2000)
     }
