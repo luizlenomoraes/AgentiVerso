@@ -1,0 +1,114 @@
+Atue como um Engenheiro de Software Sênior (Tech Lead) especialista em Next.js 16, Supabase e Fintech.
+
+Estamos migrando o projeto "AgentiVerso" de Mercado Pago para **Appmax** e transformando-o em um **PWA**.
+Eu já forneci o schema atual do banco de dados. NÃO apague tabelas existentes. Apenas altere o necessário.
+
+Siga este plano de execução sequencial:
+
+### FASE 1: CLEANUP (Remoção do Mercado Pago)
+1.  Desinstale o pacote `mercadopago`: `npm uninstall mercadopago`.
+2.  Exclua o arquivo de webhook antigo: `rm app/api/webhooks/mercadopago/route.ts`.
+3.  Limpe o conteúdo de `app/api/checkout/route.ts` (vamos reescrever do zero).
+
+---
+
+### FASE 2: BANCO DE DADOS (Supabase SQL)
+Baseado no schema que possuímos, precisamos adicionar colunas para suportar o Upsell 1-Clique no futuro.
+Gere e instrua a execução do seguinte SQL no Supabase:
+
+```sql
+-- Preparação para Appmax e 1-Click Upsell
+ALTER TABLE profiles 
+ADD COLUMN IF NOT EXISTS appmax_customer_id text,
+ADD COLUMN IF NOT EXISTS last_payment_token text, -- O "Ouro" do Upsell
+ADD COLUMN IF NOT EXISTS last_payment_brand text;
+
+ALTER TABLE transactions
+ADD COLUMN IF NOT EXISTS appmax_order_id text, -- ID único da Appmax
+ADD COLUMN IF NOT EXISTS payment_method text; -- ex: 'credit_card', 'pix'
+
+```
+
+---
+
+### FASE 3: BACKEND & INTEGRAÇÃO APPMAX
+
+Crie um arquivo `lib/appmax.ts` para centralizar a lógica. Como não há SDK, use `fetch`.
+
+**Documentação Simulada da Appmax (Para Contexto):**
+
+* **Base URL:** `https://admin.appmax.com.br/api/v3`
+* **Auth:** Header `access-token: process.env.APPMAX_API_KEY`
+* **Criar Pedido (`POST /orders`):**
+* Payload deve incluir `customer` (com `cpf`, `phone` vindos da tabela `profiles` se existirem).
+* Retorno: `{ "data": { "id": "12345", "checkout_url": "..." } }`.
+
+
+* **Webhook (`POST`):**
+* Evento `order.paid`.
+* O payload contém `data.customer.id` e `data.payment.token`. **CRUCIAL:** Precisamos salvar esses dois valores no `profiles` do usuário para permitir compras futuras sem digitar cartão.
+
+
+
+**Tarefa 3.1: Reescrever `app/api/checkout/route.ts**`
+
+1. Receba `{ packageId }`.
+2. Busque o usuário no Supabase (`profiles`) para pegar Nome, Email, CPF e Telefone.
+3. Busque o pacote (`credit_packages`) para pegar o preço.
+4. Chame a API da Appmax criando o pedido.
+* *Dica:* Se o usuário não tiver CPF/Phone no perfil, envie strings vazias ou dados genéricos permitidos, mas tente preencher.
+
+
+5. Salve o registro em `transactions` com status `pending`.
+6. Retorne `{ url: checkout_url }`.
+
+**Tarefa 3.2: Criar Webhook `app/api/webhooks/appmax/route.ts**`
+
+1. Valide se o evento é `order.paid`.
+2. Identifique a transação local (via `metadata` enviada no checkout ou cruzando IDs).
+3. Atualize `transactions` para `approved`.
+4. Incremente os créditos do usuário em `profiles`.
+5. **Lógica de Upsell:** Atualize a tabela `profiles` salvando o `appmax_customer_id` e o `last_payment_token` recebidos no webhook.
+
+---
+
+### FASE 4: TRANSFORMAÇÃO PWA (Progressive Web App)
+
+1. Instale: `npm install @ducanh2912/next-pwa` (Compatível com Next 16).
+2. Atualize `next.config.mjs`:
+```javascript
+import withPWA from "@ducanh2912/next-pwa";
+
+const pwaConfig = withPWA({
+  dest: "public",
+  cacheOnFrontEndNav: true,
+  aggressiveFrontEndNavCaching: true,
+  reloadOnOnline: true,
+  swcMinify: true,
+  disable: process.env.NODE_ENV === "development",
+  workboxOptions: {
+    disableDevLogs: true,
+  },
+});
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // mantenha suas configs existentes aqui
+};
+
+export default pwaConfig(nextConfig);
+
+```
+
+
+3. Verifique se `public/manifest.json` existe. Se não, crie um básico apontando para os ícones que já estão na pasta `public` (vi que existem icon.svg e outros).
+
+---
+
+### CHECKLIST DE FINALIZAÇÃO
+
+* [ ] O código deve tratar erros de API da Appmax (try/catch).
+* [ ] O Webhook deve retornar status 200 rápido para a Appmax não reenviar.
+* [ ] Verifique se as variáveis de ambiente estão sendo chamadas corretamente (`process.env.APPMAX_API_KEY`).
+
+Gere os arquivos necessários agora.

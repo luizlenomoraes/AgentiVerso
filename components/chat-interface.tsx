@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { AgentAvatar } from "@/components/agent-avatar"
+import { CreditCounter } from "@/components/credit-counter"
 import Link from "next/link"
-import { ArrowLeft, Send, Loader2 } from "lucide-react"
+import { ArrowLeft, Send, Loader2, Sparkles, RotateCcw, User } from "lucide-react"
 
-// ... (Tipos Message e Agent mantêm iguais) ...
 type Message = {
   id: string
   role: "user" | "assistant"
@@ -41,7 +41,6 @@ export function ChatInterface({
   initialConversationId = null
 }: ChatInterfaceProps) {
 
-  // Inicialize o estado com as mensagens vindas do banco
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
@@ -49,7 +48,6 @@ export function ChatInterface({
   const [conversationId, setConversationId] = useState<string | null>(initialConversationId)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Scroll automático para a última mensagem
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
@@ -79,7 +77,7 @@ export function ChatInterface({
         body: JSON.stringify({
           agentId: agent.id,
           message: userMessage.content,
-          conversationId, // Usa o ID existente
+          conversationId,
         }),
       })
 
@@ -92,7 +90,7 @@ export function ChatInterface({
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: data.reply, // CORRIGIDO: API retorna "reply" não "response"
+        content: data.reply,
         created_at: new Date().toISOString(),
       }
 
@@ -105,122 +103,188 @@ export function ChatInterface({
     }
   }
 
-  // ... (JSX do return mantém igual) ...
   return (
     <div className="h-dvh w-full bg-background flex flex-col overflow-hidden relative">
-      {/* ... (Cabeçalho, ScrollArea, Input - tudo igual) ... */}
-      <header className="border-b border-border/40 bg-card/30 backdrop-blur-xl">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      {/* Background Grid */}
+      <div className="cyber-grid fixed inset-0 z-0 pointer-events-none opacity-20" />
+
+      {/* Header */}
+      <header className="relative z-10 border-b border-primary/20 bg-card/80 backdrop-blur-xl">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="icon">
+            <Button asChild variant="ghost" size="icon" className="hover:bg-primary/10">
               <Link href="/dashboard">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
             </Button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-xl">
-                {agent.photo_url || "🤖"}
-              </div>
+              <AgentAvatar
+                name={agent.name}
+                emoji={agent.photo_url}
+                status={loading ? "processing" : "online"}
+                size="md"
+              />
               <div>
-                <h1 className="font-semibold">{agent.name}</h1>
-                {agent.categories && <p className="text-xs text-muted-foreground">{agent.categories.name}</p>}
+                <h1 className="font-semibold font-orbitron">{agent.name}</h1>
+                {agent.categories && (
+                  <p className="text-xs text-primary/70">{agent.categories.name}</p>
+                )}
               </div>
             </div>
           </div>
+
           <div className="flex items-center gap-3">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => {
                 setConversationId(null)
                 setMessages([])
               }}
-              className="bg-transparent"
+              className="gap-2 text-muted-foreground hover:text-foreground hover:bg-primary/10"
             >
-              Nova Conversa
+              <RotateCcw className="w-4 h-4" />
+              <span className="hidden sm:inline">Nova Conversa</span>
             </Button>
-            <Link href="/dashboard/credits">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors cursor-pointer group">
-                <span className="text-sm text-muted-foreground group-hover:text-primary transition-colors">Créditos:</span>
-                <span className="font-bold text-primary">{credits}</span>
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse ml-1" />
-              </div>
-            </Link>
+            <CreditCounter credits={credits} showBuyButton />
           </div>
         </div>
       </header>
 
-      <ScrollArea className="flex-1 p-4">
-        <div className="container mx-auto max-w-4xl space-y-4">
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto relative z-10">
+        <div className="container mx-auto max-w-4xl p-4 space-y-6">
+          {/* Empty State */}
           {messages.length === 0 && (
-            <Card className="p-8 text-center space-y-4 bg-card/50 backdrop-blur border-border/50">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center text-4xl mx-auto">
-                {agent.photo_url || "🤖"}
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-2">{agent.name}</h2>
-                <p className="text-muted-foreground">{agent.description}</p>
-              </div>
-              <p className="text-sm text-muted-foreground">Envie uma mensagem para começar a conversa</p>
-            </Card>
+            <div className="py-12 animate-fade-in-up">
+              <Card className="p-8 text-center space-y-6 bg-card/50 backdrop-blur border-primary/20">
+                <div className="relative mx-auto w-fit">
+                  <AgentAvatar
+                    name={agent.name}
+                    emoji={agent.photo_url}
+                    status="online"
+                    size="xl"
+                  />
+                  <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold font-orbitron">{agent.name}</h2>
+                  <p className="text-muted-foreground max-w-md mx-auto">{agent.description}</p>
+                </div>
+                <p className="text-sm text-primary/70 flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  Online e pronto para ajudar
+                </p>
+              </Card>
+            </div>
           )}
 
-          {messages.map((message) => (
-            <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+          {/* Messages */}
+          {messages.map((message, index) => (
+            <div
+              key={message.id}
+              className={`flex gap-3 animate-fade-in-up ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              {/* Agent Avatar */}
               {message.role === "assistant" && (
-                <Avatar className="w-8 h-8 bg-gradient-to-br from-primary to-accent">
-                  <AvatarFallback>{agent.photo_url || "🤖"}</AvatarFallback>
-                </Avatar>
+                <AgentAvatar
+                  name={agent.name}
+                  emoji={agent.photo_url}
+                  status="online"
+                  size="sm"
+                />
               )}
-              <Card
-                className={`p-4 max-w-[80%] ${message.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card/50 backdrop-blur border-border/50"
-                  }`}
+
+              {/* Message Bubble */}
+              <div
+                className={`
+                  relative max-w-[80%] p-4 rounded-2xl
+                  ${message.role === "user"
+                    ? "bg-gradient-to-br from-primary to-accent text-background rounded-br-md"
+                    : "bg-card/70 backdrop-blur border border-primary/20 rounded-bl-md"
+                  }
+                `}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-              </Card>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                <span className={`
+                  text-[10px] mt-2 block
+                  ${message.role === "user" ? "text-background/60" : "text-muted-foreground"}
+                `}>
+                  {new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+
+                {/* Decorative corner */}
+                {message.role === "assistant" && (
+                  <div className="absolute -left-1 bottom-2 w-2 h-2 bg-card/70 border-l border-b border-primary/20 rotate-45" />
+                )}
+              </div>
+
+              {/* User Avatar */}
               {message.role === "user" && (
-                <Avatar className="w-8 h-8 bg-secondary">
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-secondary to-accent/50 flex items-center justify-center">
+                  <User className="w-4 h-4 text-white" />
+                </div>
               )}
             </div>
           ))}
 
+          {/* Typing Indicator */}
           {loading && (
-            <div className="flex gap-3 justify-start">
-              <Avatar className="w-8 h-8 bg-gradient-to-br from-primary to-accent">
-                <AvatarFallback>{agent.photo_url || "🤖"}</AvatarFallback>
-              </Avatar>
-              <Card className="p-4 bg-card/50 backdrop-blur border-border/50">
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              </Card>
+            <div className="flex gap-3 justify-start animate-fade-in-up">
+              <AgentAvatar
+                name={agent.name}
+                emoji={agent.photo_url}
+                status="processing"
+                size="sm"
+              />
+              <div className="px-5 py-4 rounded-2xl rounded-bl-md bg-card/70 backdrop-blur border border-primary/20">
+                <div className="flex gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Elemento para scroll automático */}
           <div ref={messagesEndRef} />
         </div>
-      </ScrollArea>
+      </div>
 
-      <div className="border-t border-border/40 bg-card/30 backdrop-blur-xl p-4">
-        <div className="container mx-auto max-w-4xl flex gap-2">
-          <Input
-            placeholder={credits > 0 ? "Digite sua mensagem..." : "Sem créditos disponíveis"}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-            disabled={loading || credits <= 0}
-            className="bg-background/50 border-border/50"
-          />
-          <Button
-            onClick={handleSend}
-            disabled={loading || !input.trim() || credits <= 0}
-            className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
+      {/* Input Area */}
+      <div className="relative z-10 border-t border-primary/20 bg-card/80 backdrop-blur-xl p-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="flex gap-3 items-center">
+            <div className="flex-1 relative">
+              <Input
+                placeholder={credits > 0 ? "Digite sua mensagem..." : "Sem créditos disponíveis"}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                disabled={loading || credits <= 0}
+                className="pr-12 bg-background/50 border-primary/20 focus:border-primary/50 h-12 text-base"
+              />
+            </div>
+            <Button
+              onClick={handleSend}
+              disabled={loading || !input.trim() || credits <= 0}
+              className="h-12 w-12 bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all hover:scale-105 hover:shadow-[0_0_20px_rgba(0,255,249,0.4)]"
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
+            </Button>
+          </div>
+
+          {credits <= 5 && credits > 0 && (
+            <p className="text-xs text-destructive mt-2 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+              Créditos baixos. Recarregue para continuar conversando.
+            </p>
+          )}
         </div>
       </div>
     </div>
