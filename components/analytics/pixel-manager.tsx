@@ -12,24 +12,46 @@ const supabaseAdmin = createClient(
 
 async function getPixelSettings() {
     try {
+        console.log("PixelManager: Fetching settings...")
         const { data, error } = await supabaseAdmin
             .from("app_settings")
             .select("*")
 
-        if (error || !data) return null
+        if (error) {
+            console.error("PixelManager: Error fetching settings:", error)
+            return null
+        }
 
-        // Transforma array de {key, value} em objeto se necessário, 
-        // mas a migration adicionou colunas diretas, então deve vir na primeira linha
-        // ou vir como key-value se a tabela ainda for híbrida.
-        // A tabela original era key-value? O usuario disse "schema atual mostra... key-value pairs".
-        // Minha migration ADICIONOU COLUNAS.
-        // Então se houver uma linha (id=1), as colunas estarão lá.
+        if (!data || data.length === 0) {
+            console.warn("PixelManager: No settings found in app_settings table.")
+            return null
+        }
 
-        // Vamos pegar a primeira linha
-        const settings = data[0] || {}
+        // Transforma array de {key, value} em objeto (suporte a Key-Value Store)
+        const settings: any = {}
+        data.forEach((row: any) => {
+            if (row.key && row.value) {
+                settings[row.key] = row.value
+            }
+            // Se houver colunas legadas ou migradas na primeira linha
+            // (Isso cobre o caso híbrido se alguém salvou na coluna)
+            if (row.google_pixel_id) settings.google_pixel_id = row.google_pixel_id
+            if (row.facebook_pixel_id) settings.facebook_pixel_id = row.facebook_pixel_id
+            if (row.tiktok_pixel_id) settings.tiktok_pixel_id = row.tiktok_pixel_id
+            if (row.kwai_pixel_id) settings.kwai_pixel_id = row.kwai_pixel_id
+            if (row.pinterest_pixel_id) settings.pinterest_pixel_id = row.pinterest_pixel_id
+            if (row.taboola_pixel_id) settings.taboola_pixel_id = row.taboola_pixel_id
+        })
+
+        console.log("PixelManager: Settings retrieved (KV mapped):", {
+            google: settings.google_pixel_id,
+            facebook: settings.facebook_pixel_id,
+            tiktok: settings.tiktok_pixel_id
+        })
+
         return settings
     } catch (err) {
-        console.error("Erro ao carregar pixels:", err)
+        console.error("PixelManager: Unexpected error:", err)
         return null
     }
 }
