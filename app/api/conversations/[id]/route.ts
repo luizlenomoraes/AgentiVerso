@@ -4,9 +4,10 @@ import { NextResponse } from "next/server"
 // PATCH: Atualizar o título (Renomear)
 export async function PATCH(
     request: Request,
-    { params }: { params: { id: string } }
+    props: { params: Promise<{ id: string }> }
 ) {
     try {
+        const params = await props.params
         const { id } = params
         const { title } = await request.json()
 
@@ -37,9 +38,10 @@ export async function PATCH(
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    props: { params: Promise<{ id: string }> }
 ) {
     try {
+        const params = await props.params
         const { id } = params
         const supabase = await getSupabaseServerClient()
 
