@@ -50,7 +50,7 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
         setEditTitle(conv.title || conv.agents?.name || "Conversa")
     }
 
-    const handleSaveRename = async (e: React.MouseEvent | React.FormEvent) => {
+    const handleSaveRename = async (e: React.MouseEvent | React.FormEvent | React.KeyboardEvent) => {
         e.preventDefault()
         e.stopPropagation()
         if (!editingId) return
@@ -67,7 +67,7 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
         }
     }
 
-    const handleCancelRename = (e: React.MouseEvent) => {
+    const handleCancelRename = (e: React.MouseEvent | React.KeyboardEvent) => {
         e.preventDefault()
         e.stopPropagation()
         setEditingId(null)
