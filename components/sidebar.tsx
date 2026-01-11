@@ -23,7 +23,6 @@ import {
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 
@@ -168,7 +167,7 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
                             <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full">{conversations.length}</span>
                         </div>
                     )}
-                    <ScrollArea className="flex-1 px-3">
+                    <div className="flex-1 overflow-y-auto px-3 my-2 custom-scrollbar">
                         <div className="space-y-1 pb-4">
                             {conversations.length === 0 ? (
                                 !collapsed && (
@@ -300,7 +299,7 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
                                 })
                             )}
                         </div>
-                    </ScrollArea>
+                    </div>
                 </div>
 
                 {/* Footer / User Profile */}
