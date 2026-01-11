@@ -1,22 +1,17 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import {
-  createCustomer,
-  createOrder,
-  payWithPix,
-  AppmaxError,
-  isAppmaxSandbox
-} from "@/lib/appmax"
+import { processPixPayment, getGatewaySettings } from "@/lib/payment-gateway"
 
 /**
- * Endpoint para iniciar o checkout via Appmax
+ * Endpoint para iniciar o checkout
  * 
  * Suporta 3 tipos de compra:
  * - type: 'credits' (padrão) - pacote de créditos
  * - type: 'agent' - agente premium individual
  * - type: 'combo' - combo promocional
  * 
- * O webhook da Appmax notificará quando o pagamento for confirmado.
+ * Roteia automaticamente para Mercado Pago ou Appmax
+ * baseado nas configurações do admin.
  */
 export async function POST(request: Request) {
   try {
@@ -35,7 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    // Buscar dados do usuário no profiles
+    // Buscar dados do usuário
     const { data: profile } = await supabase
       .from("profiles")
       .select("full_name, email, cpf, phone")
@@ -123,7 +118,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Combo não encontrado ou inativo" }, { status: 404 })
       }
 
-      // Verificar se ainda está válido
       if (combo.valid_until && new Date(combo.valid_until) < new Date()) {
         return NextResponse.json({ error: "Esta promoção expirou" }, { status: 400 })
       }
@@ -141,9 +135,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Preço inválido" }, { status: 400 })
     }
 
-    // Valores em centavos (Appmax usa centavos)
-    const priceInCents = Math.round(price * 100)
-
     // Preparar dados do cliente
     const fullName = profile?.full_name || user.email?.split("@")[0] || "Cliente"
     const nameParts = fullName.trim().split(" ")
@@ -155,52 +146,31 @@ export async function POST(request: Request) {
       || request.headers.get("x-real-ip")
       || "127.0.0.1"
 
-    // 1. Criar customer na Appmax
-    const customerResponse = await createCustomer({
-      first_name: firstName,
-      last_name: lastName,
+    // Buscar configurações do gateway
+    const gatewaySettings = await getGatewaySettings()
+
+    // Processar pagamento PIX via gateway configurado
+    const paymentResult = await processPixPayment({
+      amount: price,
+      description: productName,
       email: profile?.email || user.email || "",
-      phone: profile?.phone || "11999999999",
-      document_number: profile?.cpf || undefined,
-      ip: clientIp,
-      products: [
-        {
-          sku: productSku,
-          name: productName,
-          quantity: 1,
-          unit_value: priceInCents,
-          type: "digital",
-        },
-      ],
+      firstName,
+      lastName,
+      cpf: profile?.cpf,
+      externalReference: productSku,
+      clientIp,
     })
 
-    const customerId = customerResponse.data.customer.id
-
-    // 2. Criar order na Appmax
-    const orderResponse = await createOrder({
-      customer_id: customerId,
-      products: [
-        {
-          sku: productSku,
-          name: productName,
-          quantity: 1,
-          unit_value: priceInCents,
-          type: "digital",
-        },
-      ],
-    })
-
-    const orderId = orderResponse.data.order.id
-
-    // 3. Criar registro na tabela transactions
+    // Criar registro na tabela transactions
     const transactionData: any = {
       user_id: user.id,
       amount: price,
       status: "pending",
-      external_id: String(orderId),
-      appmax_order_id: String(orderId),
+      external_id: paymentResult.paymentId,
       payment_method: paymentMethod,
       type: type,
+      // Guardar qual gateway foi usado
+      payment_gateway: gatewaySettings.gateway,
     }
 
     // Adicionar referência ao item comprado
@@ -208,6 +178,11 @@ export async function POST(request: Request) {
       transactionData.agent_id = agentId
     } else if (type === 'combo') {
       transactionData.combo_id = comboId
+    }
+
+    // Para Appmax, guardar order_id
+    if (paymentResult.orderId) {
+      transactionData.appmax_order_id = paymentResult.orderId
     }
 
     const { data: transaction, error: txError } = await supabase
@@ -221,64 +196,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Erro ao iniciar transação" }, { status: 500 })
     }
 
-    // 4. Processar pagamento PIX
-    if (paymentMethod === "pix") {
-      const pixResponse = await payWithPix({
-        order_id: orderId,
-        payment_data: {
-          pix: {
-            document_number: profile?.cpf || "00000000000",
-          },
-        },
-      })
-
-      if (isAppmaxSandbox()) {
-        console.log(`[Appmax Sandbox] PIX gerado para ${type}:`, orderId)
-      }
-
-      return NextResponse.json({
-        type,
-        paymentMethod: "pix",
-        transactionId: transaction.id,
-        orderId: orderId,
-        productName,
-        price,
-        bonusCredits,
-        pix: {
-          qrCode: pixResponse.data.payment.qr_code,
-          qrCodeText: pixResponse.data.payment.qr_code_text,
-          expiresAt: pixResponse.data.payment.expires_at,
-        },
-      })
-    }
-
-    // Para cartão, retornar dados do pedido
     return NextResponse.json({
       type,
-      paymentMethod: "credit_card",
+      gateway: gatewaySettings.gateway,
+      environment: gatewaySettings.environment,
+      paymentMethod: "pix",
       transactionId: transaction.id,
-      orderId: orderId,
-      customerId: customerId,
+      paymentId: paymentResult.paymentId,
+      productName,
       price,
       bonusCredits,
-      message: "Pedido criado. Envie os dados do cartão para completar o pagamento.",
+      pix: {
+        qrCode: paymentResult.qrCode,
+        qrCodeText: paymentResult.qrCodeText,
+        expiresAt: paymentResult.expiresAt,
+      },
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Checkout error:", error)
 
-    if (error instanceof AppmaxError) {
-      console.error("Appmax error details:", error.response)
-      return NextResponse.json(
-        {
-          error: "Erro ao processar pagamento",
-          details: error.message,
-          code: error.statusCode
-        },
-        { status: error.statusCode >= 400 && error.statusCode < 500 ? error.statusCode : 500 }
-      )
-    }
-
-    return NextResponse.json({ error: "Erro ao processar pagamento" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: error.message || "Erro ao processar pagamento",
+        details: error.response || null,
+      },
+      { status: 500 }
+    )
   }
 }

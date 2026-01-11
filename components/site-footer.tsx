@@ -29,8 +29,8 @@ export function SiteFooter() {
                     <div className="space-y-4">
                         <h3 className="font-bold text-lg text-primary">Legal</h3>
                         <ul className="space-y-2">
-                            <li><span className="text-muted-foreground cursor-not-allowed">Termos de Uso</span></li>
-                            <li><span className="text-muted-foreground cursor-not-allowed">Privacidade</span></li>
+                            <li><Link href="/legal/terms" className="text-muted-foreground hover:text-primary transition-colors">Termos de Uso</Link></li>
+                            <li><Link href="/legal/privacy" className="text-muted-foreground hover:text-primary transition-colors">Privacidade</Link></li>
                         </ul>
                     </div>
                 </div>

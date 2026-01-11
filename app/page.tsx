@@ -26,7 +26,8 @@ export default function HomePage() {
             </div>
 
             {/* Main Title with Gradient */}
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white font-orbitron drop-shadow-[0_0_30px_rgba(0,255,249,0.4)] animate-fade-in-up stagger-1">
+            {/* Main Title with Gradient */}
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white font-orbitron drop-shadow-[0_0_30px_rgba(0,255,249,0.4)] animate-fade-in-up stagger-1">
               INTELIGÊNCIA <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-accent animate-gradient-x">
                 DESCENTRALIZADA
@@ -34,25 +35,25 @@ export default function HomePage() {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed animate-fade-in-up stagger-2">
+            <p className="text-lg md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed animate-fade-in-up stagger-2 px-4">
               Acesse uma rede de <span className="text-primary font-semibold">agentes especializados</span> com memória persistente e acesso
               aos seus documentos privados. O futuro do trabalho começa aqui.
             </p>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 animate-fade-in-up stagger-3">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8 animate-fade-in-up stagger-3 px-4">
               <Button
                 asChild
-                className="text-lg h-14 px-8 min-w-[220px] bg-gradient-to-r from-primary to-accent text-background font-bold hover:opacity-90 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(0,255,249,0.4)] animate-glow-pulse"
+                className="w-full sm:w-auto text-lg h-14 px-8 min-w-[220px] bg-gradient-to-r from-primary to-accent text-zinc-950 font-black hover:opacity-90 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_40px_rgba(0,255,249,0.4)] animate-glow-pulse"
               >
-                <Link href="/signup" className="flex items-center gap-2">
+                <Link href="/signup" className="flex items-center justify-center gap-2">
                   INICIAR ACESSO <ArrowRight className="w-5 h-5" />
                 </Link>
               </Button>
               <Button
                 asChild
                 variant="outline"
-                className="text-lg h-14 px-8 min-w-[200px] border-primary/30 bg-primary/5 hover:bg-primary/20 hover:border-primary hover:text-primary transition-all"
+                className="w-full sm:w-auto text-lg h-14 px-8 min-w-[200px] border-primary/30 bg-primary/5 hover:bg-primary/20 hover:border-primary hover:text-primary transition-all"
               >
                 <Link href="/login">JÁ SOU MEMBRO</Link>
               </Button>
