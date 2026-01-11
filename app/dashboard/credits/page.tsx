@@ -43,7 +43,7 @@ export default async function CreditsPage() {
         <div className="text-center space-y-4 pt-4">
           <h2 className="text-4xl font-bold">Escolha seu pacote de créditos</h2>
           <p className="text-muted-foreground text-lg">
-            Cada crédito permite uma interação com qualquer agente de IA
+            Adquira créditos para potencializar seus agentes com IA de ponta
           </p>
         </div>
 
@@ -56,7 +56,7 @@ export default async function CreditsPage() {
             <ul className="space-y-2 text-muted-foreground">
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-1">•</span>
-                <span>Cada mensagem enviada para um agente consome 1 crédito</span>
+                <span>Cada ação consome créditos proporcionalmente à complexidade da entrega. Respostas mais simples usam menos, entregas profundas usam mais (1 crédito ≈ 1.000 tokens)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary mt-1">•</span>

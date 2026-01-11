@@ -360,7 +360,7 @@ function QuickStatCard({
                         "text-2xl font-bold font-orbitron",
                         highlight ? "text-primary" : "text-foreground"
                     )}>
-                        {value.toLocaleString()}
+                        {value.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </p>
                 </div>
             </div>

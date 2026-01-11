@@ -140,6 +140,9 @@ INSTRUÇÕES:
     // GERAR RESPOSTA BASEADO NO PROVIDER
     let botReply = ""
 
+    // TRACKING USE
+    let totalTokens = 0
+
     switch (provider) {
       case "gemini": {
         const genAI = new GoogleGenerativeAI(apiKey)
@@ -160,6 +163,12 @@ INSTRUÇÕES:
         const chat = geminiModel.startChat({ history })
         const result = await chat.sendMessage(message)
         botReply = result.response.text()
+
+        // Gemini Token Count
+        const usage = result.response.usageMetadata
+        if (usage) {
+          totalTokens = (usage.promptTokenCount || 0) + (usage.candidatesTokenCount || 0)
+        }
         break
       }
 
@@ -183,6 +192,11 @@ INSTRUÇÕES:
         })
 
         botReply = completion.choices[0]?.message?.content || ""
+
+        // OpenAI Token Count
+        if (completion.usage) {
+          totalTokens = completion.usage.total_tokens
+        }
         break
       }
 
@@ -205,6 +219,11 @@ INSTRUÇÕES:
         })
 
         botReply = response.content[0]?.type === "text" ? response.content[0].text : ""
+
+        // Claude Token Count
+        if (response.usage) {
+          totalTokens = response.usage.input_tokens + response.usage.output_tokens
+        }
         break
       }
 
@@ -232,6 +251,11 @@ INSTRUÇÕES:
         })
 
         botReply = completion.choices[0]?.message?.content || ""
+
+        // Grok Token Count
+        if (completion.usage) {
+          totalTokens = completion.usage.total_tokens
+        }
         break
       }
 
@@ -272,10 +296,17 @@ INSTRUÇÕES:
       },
     ])
 
-    // Atualizar créditos
+    // Atualizar créditos (Fracionado)
+    const cost = Math.max(0.1, totalTokens / 1000) // Mínimo 0.1 crédito para segurança, ou exato? User pediu exato "desconta apenas o que faltava".
+    // Vou usar exato: totalTokens / 1000. Se deu 0 tokens (erro), fallback
+
+    // Se totalTokens for 0 (fallback se API não retornou usage), estimamos
+    const finalTokens = totalTokens > 0 ? totalTokens : Math.ceil((message.length + botReply.length) / 4)
+    const exactCost = finalTokens / 1000
+
     await supabase
       .from("profiles")
-      .update({ used_credits: (profile?.used_credits || 0) + 1 })
+      .update({ used_credits: (profile?.used_credits || 0) + exactCost })
       .eq("id", userId)
 
     // Log
@@ -284,13 +315,13 @@ INSTRUÇÕES:
       agent_id: agentId,
       user_query: message,
       bot_response: botReply,
-      tokens_used: Math.ceil(botReply.length / 4),
+      tokens_used: finalTokens,
     })
 
     return NextResponse.json({
       reply: botReply,
       conversationId: currentConversationId,
-      remainingCredits: availableCredits - 1,
+      remainingCredits: Math.max(0, availableCredits - exactCost),
     })
   } catch (error: any) {
     console.error("Erro no chat:", error)

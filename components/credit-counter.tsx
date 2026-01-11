@@ -26,7 +26,8 @@ export function CreditCounter({ credits, className, showBuyButton = true }: Cred
 
         const timer = setInterval(() => {
             step++
-            current = Math.min(Math.round(increment * step), credits)
+            // Allow fractional values during animation
+            current = Math.min(increment * step, credits)
             setDisplayCredits(current)
 
             if (step >= steps) {
@@ -86,7 +87,7 @@ export function CreditCounter({ credits, className, showBuyButton = true }: Cred
                             isAnimating && "animate-pulse"
                         )}
                     >
-                        {displayCredits.toLocaleString('pt-BR')}
+                        {displayCredits.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}
                     </span>
                 </div>
 
