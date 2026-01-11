@@ -96,9 +96,17 @@ export function ChatInterface({
 
       setMessages((prev) => [...prev, assistantMessage])
       setCredits(data.remainingCredits)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error)
-    } finally {
+      const errorMessage: Message = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: `❌ Erro: ${error.message || "Ocorreu um erro desconhecido"}`,
+        created_at: new Date().toISOString(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+      if (credits > availableCredits) setCredits(availableCredits) // Restore credits if optimistic update failed? Actually credits update happens on success.
+
       setLoading(false)
     }
   }

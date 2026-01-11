@@ -19,7 +19,8 @@ import {
     X,
     MessageCircle, // For Whatsapp
     MoreVertical,
-    LogOut
+    LogOut,
+    Menu // Hamburger icon
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -37,6 +38,14 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
     const pathname = usePathname()
     const router = useRouter()
     const [collapsed, setCollapsed] = useState(false)
+    const [isMobileOpen, setIsMobileOpen] = useState(false) // Mobile state
+
+    // Effect to close sidebar on route change (navigation) on mobile
+    useEffect(() => {
+        setIsMobileOpen(false)
+    }, [pathname])
+
+    // State for actions
 
     // State for actions
     const [editingId, setEditingId] = useState<string | null>(null)
@@ -116,19 +125,46 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
 
     return (
         <>
-            {/* Backdrop for closing menus */}
+            {/* Backdrop for closing menus (Conversation Options) */}
             {openMenuId && (
                 <div
-                    className="fixed inset-0 z-40 bg-transparent"
+                    className="fixed inset-0 z-[60] bg-transparent"
                     onClick={() => setOpenMenuId(null)}
                 />
             )}
 
+            {/* Mobile Drawer Backdrop */}
+            {isMobileOpen && (
+                <div
+                    className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+                    onClick={() => setIsMobileOpen(false)}
+                />
+            )}
+
+            {/* Mobile Toggle Button (Visible only on mobile when closed) */}
+            {!isMobileOpen && (
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="fixed top-3 left-3 z-50 md:hidden bg-background/80 backdrop-blur shadow-md border-primary/20 h-10 w-10"
+                    onClick={() => setIsMobileOpen(true)}
+                >
+                    <Menu className="w-5 h-5 text-primary" />
+                </Button>
+            )}
+
             <aside
                 className={cn(
-                    "sticky top-0 h-screen transition-all duration-300 ease-in-out flex flex-col shrink-0 z-40",
-                    "bg-card/95 backdrop-blur-xl border-r border-primary/20 shadow-xl",
-                    collapsed ? "w-20" : "w-[280px] md:w-[320px]"
+                    // Base styles & Transitions
+                    "flex flex-col shrink-0 transition-transform duration-300 ease-in-out bg-card/95 backdrop-blur-xl border-r border-primary/20 shadow-xl",
+
+                    // Desktop Styles (Sticky)
+                    "md:sticky md:top-0 md:h-screen md:z-40 md:translate-x-0",
+                    collapsed ? "md:w-20" : "md:w-[280px] lg:w-[320px]",
+
+                    // Mobile Styles (Fixed Drawer)
+                    "fixed inset-y-0 left-0 z-50 h-screen w-[280px]",
+                    isMobileOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
                 {/* Header / New Chat */}

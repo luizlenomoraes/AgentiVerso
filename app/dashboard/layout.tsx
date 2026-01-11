@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 import { redirect } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 
@@ -33,8 +34,16 @@ export default async function DashboardLayout({
         .order("updated_at", { ascending: false })
         .limit(30)
 
+
+
     // Buscar configurações (apenas chaves públicas necessárias)
-    const { data: appSettings } = await supabase
+    // Usamos createClient com Service Role para bypassar RLS (já que app_settings é protegido)
+    const adminClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: appSettings } = await adminClient
         .from("app_settings")
         .select("key, value")
         .eq("key", "support_whatsapp")

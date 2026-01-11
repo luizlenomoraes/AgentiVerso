@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import OpenAI from "openai"
@@ -39,8 +40,13 @@ export async function POST(request: Request) {
       }
     }
 
-    // BUSCAR CONFIGURAÇÕES DO ADMIN
-    const { data: aiSettings } = await supabase
+    // BUSCAR CONFIGURAÇÕES DO ADMIN (Usando Service Role para bypass RLS)
+    const adminSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: aiSettings } = await adminSupabase
       .from("app_settings")
       .select("key, value")
       .in("key", ["ai_provider", "ai_model", "gemini_api_key", "openai_api_key", "claude_api_key", "grok_api_key"])
@@ -297,8 +303,7 @@ INSTRUÇÕES:
     ])
 
     // Atualizar créditos (Fracionado)
-    const cost = Math.max(0.1, totalTokens / 1000) // Mínimo 0.1 crédito para segurança, ou exato? User pediu exato "desconta apenas o que faltava".
-    // Vou usar exato: totalTokens / 1000. Se deu 0 tokens (erro), fallback
+    const cost = Math.max(0.1, totalTokens / 1000)
 
     // Se totalTokens for 0 (fallback se API não retornou usage), estimamos
     const finalTokens = totalTokens > 0 ? totalTokens : Math.ceil((message.length + botReply.length) / 4)
