@@ -33,6 +33,17 @@ export default async function DashboardLayout({
         .order("updated_at", { ascending: false })
         .limit(30)
 
+    // Buscar configurações (apenas chaves públicas necessárias)
+    const { data: appSettings } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .eq("key", "support_whatsapp")
+        .single()
+
+    const supportWhatsapp = appSettings?.value || null
+
+
+
     const availableCredits = profile ? Math.max(0, (profile.total_credits || 0) - (profile.used_credits || 0)) : 0
 
     return (
@@ -46,6 +57,7 @@ export default async function DashboardLayout({
                     conversations={conversations || []}
                     profile={profile}
                     availableCredits={availableCredits}
+                    supportWhatsapp={supportWhatsapp}
                 />
 
                 <main className="flex-1 min-w-0 flex flex-col h-screen overflow-auto">

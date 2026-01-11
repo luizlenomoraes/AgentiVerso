@@ -80,6 +80,8 @@ export default function SettingsPage() {
     kwai_pixel_id: "",
     pinterest_pixel_id: "",
     taboola_pixel_id: "",
+    // Support
+    support_whatsapp: "",
   })
 
   useEffect(() => {
@@ -108,7 +110,9 @@ export default function SettingsPage() {
           tiktok_pixel_id: data.tiktok_pixel_id || "",
           kwai_pixel_id: data.kwai_pixel_id || "",
           pinterest_pixel_id: data.pinterest_pixel_id || "",
+
           taboola_pixel_id: data.taboola_pixel_id || "",
+          support_whatsapp: data.support_whatsapp || "",
         }))
       } catch (error) {
         console.error("Erro ao carregar configurações")
@@ -376,6 +380,31 @@ export default function SettingsPage() {
             )}
           </Card>
 
+
+
+          {/* SEÇÃO: SUPORTE */}
+          <Card className="p-8 bg-card/50 backdrop-blur border-border/50 space-y-6">
+            <div className="flex items-center gap-3 text-primary">
+              <Share2 className="w-6 h-6" />
+              <h2 className="text-xl font-bold">Suporte WhatsApp</h2>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Número do WhatsApp (com DDI e DDD, ex: 5511999999999)</label>
+                <Input
+                  type="text"
+                  placeholder="5511999999999"
+                  value={settings.support_whatsapp}
+                  onChange={(e) => setSettings({ ...settings, support_whatsapp: e.target.value })}
+                  className="bg-background/50 border-border/50"
+                />
+                <p className="text-xs text-muted-foreground">
+                  O botão de suporte aparecerá na sidebar se este campo estiver preenchido.
+                </p>
+              </div>
+            </div>
+          </Card>
+
           {/* SEÇÃO: PROVIDER DE IA */}
           <Card className="p-8 bg-card/50 backdrop-blur border-border/50 space-y-6">
             <div className="flex items-center gap-3 text-primary">
@@ -584,7 +613,7 @@ export default function SettingsPage() {
             </Button>
           </div>
         </div>
-      </main>
-    </div>
+      </main >
+    </div >
   )
 }
