@@ -1,5 +1,7 @@
 "use client"
 
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -16,7 +18,8 @@ import {
     Check,
     X,
     MessageCircle, // For Whatsapp
-    MoreVertical
+    MoreVertical,
+    LogOut
 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -97,6 +100,13 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
         } finally {
             setIsDeleting(null)
         }
+    }
+
+    const handleLogout = async () => {
+        const supabase = getSupabaseBrowserClient()
+        await supabase.auth.signOut()
+        router.refresh()
+        router.push("/login")
     }
 
     const toggleMenu = (e: React.MouseEvent, id: string) => {
@@ -346,6 +356,20 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
                         </Link>
                     )}
 
+
+
+                    {/* Logout Button */}
+                    <button
+                        onClick={handleLogout}
+                        className={cn(
+                            "flex items-center gap-3 p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive group w-full",
+                            collapsed && "justify-center"
+                        )}
+                    >
+                        <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                        {!collapsed && <span className="text-sm">Sair</span>}
+                    </button>
+
                     {/* User Info */}
                     <div className={cn(
                         "flex items-center gap-3 pt-3 mt-2 border-t border-border/50",
@@ -371,7 +395,7 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
                 >
                     {collapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
                 </button>
-            </aside>
+            </aside >
         </>
     )
 }
