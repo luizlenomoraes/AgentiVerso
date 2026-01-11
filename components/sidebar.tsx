@@ -4,118 +4,172 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
-    Bot,
+    Plus,
     MessageSquare,
-    CreditCard,
-    Settings,
     LayoutDashboard,
-    LogOut,
+    Settings,
+    CreditCard,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Search,
+    User
 } from "lucide-react"
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface SidebarProps {
-    credits?: number
-    userName?: string
+    conversations: any[]
+    profile: any
+    availableCredits?: number
 }
 
-const navItems = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/dashboard", icon: Bot, label: "Agentes", tab: "agents" },
-    { href: "/dashboard", icon: MessageSquare, label: "Conversas", tab: "conversations" },
-    { href: "/dashboard/credits", icon: CreditCard, label: "Créditos" },
-    { href: "/admin", icon: Settings, label: "Admin", adminOnly: true },
-]
-
-export function Sidebar({ credits = 0, userName }: SidebarProps) {
+export function Sidebar({ conversations = [], profile, availableCredits = 0 }: SidebarProps) {
     const pathname = usePathname()
     const [collapsed, setCollapsed] = useState(false)
+
+    // Agrupar conversas por data (simplificado por enquanto)
+    // TODO: Implementar agrupamento por Hoje, Ontem, etc.
 
     return (
         <aside
             className={cn(
-                "fixed left-0 top-0 z-40 h-screen transition-all duration-300 ease-in-out",
-                "bg-card/80 backdrop-blur-xl border-r border-primary/20",
-                "flex flex-col",
-                collapsed ? "w-20" : "w-64"
+                "sticky top-0 h-screen transition-all duration-300 ease-in-out flex flex-col shrink-0 z-40",
+                "bg-card/95 backdrop-blur-xl border-r border-primary/20",
+                collapsed ? "w-20" : "w-[280px] md:w-[320px]"
             )}
         >
-            {/* Logo */}
-            <div className="p-4 border-b border-primary/20">
-                <Link href="/dashboard" className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                        <span className="text-xl">🤖</span>
+            {/* Header / New Chat */}
+            <div className="p-4 space-y-4">
+                <Link href="/dashboard" className="flex items-center gap-2 px-2 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
+                        <span className="text-lg">🤖</span>
                     </div>
                     {!collapsed && (
-                        <span className="font-orbitron font-bold text-lg text-primary">
+                        <span className="font-orbitron font-bold text-lg text-primary truncate">
                             AgentiVerso
                         </span>
                     )}
                 </Link>
+
+                <Button
+                    asChild
+                    variant="outline" // Mudado para outline para menos peso visual que o gradiente
+                    className={cn(
+                        "w-full justify-start gap-2 border-primary/20 hover:bg-primary/10 transition-all",
+                        collapsed && "justify-center px-0"
+                    )}
+                >
+                    <Link href="/dashboard">
+                        <Plus className="w-5 h-5 text-primary" />
+                        {!collapsed && <span>Novo Chat / Explorar</span>}
+                    </Link>
+                </Button>
             </div>
 
-            {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2">
-                {navItems.map((item) => {
-                    const isActive = pathname === item.href
-                    const Icon = item.icon
-
-                    return (
-                        <Link
-                            key={item.label}
-                            href={item.href}
-                            className={cn(
-                                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
-                                "hover:bg-primary/10 group",
-                                isActive && "bg-primary/20 border border-primary/30",
-                                collapsed && "justify-center px-3"
-                            )}
-                        >
-                            <Icon
-                                className={cn(
-                                    "w-5 h-5 transition-colors",
-                                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                                )}
-                            />
-                            {!collapsed && (
-                                <span
-                                    className={cn(
-                                        "font-medium transition-colors",
-                                        isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
-                                    )}
-                                >
-                                    {item.label}
-                                </span>
-                            )}
-                            {isActive && !collapsed && (
-                                <div className="ml-auto w-2 h-2 rounded-full bg-primary animate-pulse" />
-                            )}
-                        </Link>
-                    )
-                })}
-            </nav>
-
-            {/* Credits Display */}
-            <div className={cn(
-                "p-4 border-t border-primary/20",
-                collapsed && "flex justify-center"
-            )}>
-                <div className={cn(
-                    "flex items-center gap-3 p-3 rounded-xl",
-                    "bg-gradient-to-r from-primary/10 to-accent/10",
-                    "border border-primary/20"
-                )}>
-                    <div className="relative">
-                        <CreditCard className="w-5 h-5 text-primary" />
-                        <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary animate-ping" />
+            {/* Conversation List */}
+            <div className="flex-1 overflow-hidden flex flex-col">
+                {!collapsed && (
+                    <div className="px-6 pb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Histórico
                     </div>
+                )}
+                <ScrollArea className="flex-1 px-3">
+                    <div className="space-y-1 pb-4">
+                        {conversations.length === 0 ? (
+                            !collapsed && (
+                                <div className="text-center py-8 px-4 text-muted-foreground text-sm">
+                                    <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                    Nenhuma conversa recente
+                                </div>
+                            )
+                        ) : (
+                            conversations.map((conv) => {
+                                const isActive = pathname.includes(conv.id)
+                                return (
+                                    <Link
+                                        key={conv.id}
+                                        href={`/dashboard/chat/${conv.agent_id}?conversation=${conv.id}`}
+                                        className={cn(
+                                            "flex items-center gap-3 px-3 py-3 rounded-lg transition-all group relative",
+                                            "hover:bg-primary/10",
+                                            isActive ? "bg-primary/20 text-primary" : "text-muted-foreground",
+                                            collapsed && "justify-center"
+                                        )}
+                                    >
+                                        <MessageSquare className="w-4 h-4 shrink-0" />
+                                        {!collapsed && (
+                                            <div className="flex-1 min-w-0">
+                                                <p className={cn(
+                                                    "text-sm font-medium truncate",
+                                                    isActive ? "text-foreground" : "text-foreground/80 group-hover:text-foreground"
+                                                )}>
+                                                    {conv.title || conv.agents?.name || "Conversa"}
+                                                </p>
+                                                <p className="text-[10px] text-muted-foreground/70 truncate">
+                                                    {conv.agents?.name}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {isActive && !collapsed && (
+                                            <div className="absolute right-2 w-1.5 h-1.5 rounded-full bg-primary" />
+                                        )}
+                                    </Link>
+                                )
+                            })
+                        )}
+                    </div>
+                </ScrollArea>
+            </div>
+
+            {/* Footer / User Profile */}
+            <div className="p-4 border-t border-primary/20 space-y-2 bg-card/50">
+                {/* Credits */}
+                <Link
+                    href="/dashboard/credits"
+                    className={cn(
+                        "flex items-center gap-3 p-2 rounded-lg hover:bg-primary/10 transition-colors",
+                        collapsed && "justify-center"
+                    )}
+                >
+                    <CreditCard className="w-4 h-4 text-accent" />
                     {!collapsed && (
-                        <div className="flex-1">
-                            <p className="text-xs text-muted-foreground">Créditos</p>
-                            <p className="font-orbitron font-bold text-lg text-primary">
-                                {credits.toLocaleString()}
-                            </p>
+                        <div className="flex-1 flex justify-between items-center">
+                            <span className="text-sm">Créditos</span>
+                            <span className="text-sm font-bold font-orbitron text-accent">
+                                {availableCredits.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                            </span>
+                        </div>
+                    )}
+                </Link>
+
+                {/* Admin Link (Conditional could be handled by parent passing explicit flag, but checking profile here is OK for UI display) */}
+                {/* Assuming profile.role is available, otherwise this link appears for everyone which is harmless (protected by middleware) */}
+                <Link
+                    href="/admin"
+                    className={cn(
+                        "flex items-center gap-3 p-2 rounded-lg hover:bg-primary/10 transition-colors text-muted-foreground hover:text-foreground",
+                        collapsed && "justify-center"
+                    )}
+                >
+                    <Settings className="w-4 h-4" />
+                    {!collapsed && <span className="text-sm">Configurações</span>}
+                </Link>
+
+                {/* User Info */}
+                <div className={cn(
+                    "flex items-center gap-3 pt-2 mt-2 border-t border-border/50",
+                    collapsed && "justify-center"
+                )}>
+                    <Avatar className="w-8 h-8 border border-primary/30">
+                        <AvatarImage src={profile?.avatar_url} />
+                        <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
+                    </Avatar>
+                    {!collapsed && (
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{profile?.full_name?.split(' ')[0]}</p>
+                            <p className="text-xs text-muted-foreground truncate">{profile?.email}</p>
                         </div>
                     )}
                 </div>
@@ -125,16 +179,18 @@ export function Sidebar({ credits = 0, userName }: SidebarProps) {
             <button
                 onClick={() => setCollapsed(!collapsed)}
                 className={cn(
-                    "absolute -right-3 top-1/2 -translate-y-1/2",
-                    "w-6 h-6 rounded-full bg-card border border-primary/30",
+                    "absolute -right-3 top-1/2 -translate-y-1/2 z-50",
+                    "w-6 h-6 rounded-full bg-background border border-primary/30",
                     "flex items-center justify-center",
-                    "hover:bg-primary/20 transition-colors"
+                    "hover:bg-primary/20 transition-colors shadow-lg",
+                    // Hide on mobile as sidebar is likely handled differently (drawer)
+                    "hidden md:flex"
                 )}
             >
                 {collapsed ? (
-                    <ChevronRight className="w-4 h-4 text-primary" />
+                    <ChevronRight className="w-3 h-3 text-primary" />
                 ) : (
-                    <ChevronLeft className="w-4 h-4 text-primary" />
+                    <ChevronLeft className="w-3 h-3 text-primary" />
                 )}
             </button>
         </aside>

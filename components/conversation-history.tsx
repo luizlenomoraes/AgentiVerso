@@ -103,7 +103,7 @@ export function ConversationHistory({ conversations: initialConversations }: Con
               </div>
 
               <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href={`/chat/${conversation.agent_id}?conversation=${conversation.id}`}>
+                <Link href={`/dashboard/chat/${conversation.agent_id}?conversation=${conversation.id}`}>
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Continuar Conversa
                 </Link>

@@ -245,7 +245,7 @@ export function DashboardContent({
                                             asChild
                                             className="w-full bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 text-primary hover:from-primary hover:to-accent hover:text-background transition-all duration-300 group-hover:animate-glow-pulse"
                                         >
-                                            <Link href={`/chat/${agent.id}`} className="flex items-center justify-center gap-2">
+                                            <Link href={`/dashboard/chat/${agent.id}`} className="flex items-center justify-center gap-2">
                                                 Conversar
                                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                             </Link>
@@ -291,7 +291,7 @@ export function DashboardContent({
                         {conversations.slice(0, 3).map((conv) => (
                             <Link
                                 key={conv.id}
-                                href={`/chat/${conv.agent_id}?conversation=${conv.id}`}
+                                href={`/dashboard/chat/${conv.agent_id}?conversation=${conv.id}`}
                                 className="p-4 rounded-xl bg-card/30 border border-border/50 hover:border-primary/30 transition-all hover:bg-card/50"
                             >
                                 <div className="flex items-center gap-3">

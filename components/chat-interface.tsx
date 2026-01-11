@@ -112,7 +112,7 @@ export function ChatInterface({
       <header className="relative z-10 border-b border-primary/20 bg-card/80 backdrop-blur-xl">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button asChild variant="ghost" size="icon" className="hover:bg-primary/10">
+            <Button asChild variant="ghost" size="icon" className="hover:bg-primary/10 md:hidden">
               <Link href="/dashboard">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
