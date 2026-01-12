@@ -105,8 +105,8 @@ export function ChatInterface({
         created_at: new Date().toISOString(),
       }
       setMessages((prev) => [...prev, errorMessage])
-      if (credits > availableCredits) setCredits(availableCredits) // Restore credits if optimistic update failed? Actually credits update happens on success.
-
+      if (credits > availableCredits) setCredits(availableCredits)
+    } finally {
       setLoading(false)
     }
   }
