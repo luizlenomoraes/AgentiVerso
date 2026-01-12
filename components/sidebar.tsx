@@ -128,7 +128,7 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
             {/* Backdrop for closing menus (Conversation Options) */}
             {openMenuId && (
                 <div
-                    className="fixed inset-0 z-[60] bg-transparent"
+                    className="fixed inset-0 z-30 bg-transparent"
                     onClick={() => setOpenMenuId(null)}
                 />
             )}
@@ -219,74 +219,80 @@ export function Sidebar({ conversations = [], profile, availableCredits = 0, sup
                                     const isMenuOpen = openMenuId === conv.id
 
                                     return (
-                                        <div key={conv.id} className="relative group/item">
-                                            <Link
-                                                href={`/dashboard/chat/${conv.agent_id}?conversation=${conv.id}`}
-                                                className={cn(
-                                                    "flex items-center gap-3 px-3 py-3 rounded-xl transition-all relative overflow-hidden",
-                                                    "hover:bg-accent/5 hover:border-accent/10 border border-transparent",
-                                                    isActive ? "bg-primary/10 border-primary/20 text-primary shadow-sm" : "text-muted-foreground",
-                                                    collapsed && "justify-center"
-                                                )}
-                                            >
-                                                {/* Active Indicator Background */}
-                                                {isActive && (
-                                                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50 z-0" />
-                                                )}
-
-                                                <div className="relative z-10 flex items-center gap-3 w-full">
+                                        <div key={conv.id} className="relative group/item z-auto">
+                                            {isEditing ? (
+                                                <div
+                                                    className={cn(
+                                                        "flex items-center gap-3 px-3 py-3 rounded-xl transition-all relative overflow-hidden bg-background border border-primary/20 shadow-sm",
+                                                        collapsed && "justify-center"
+                                                    )}
+                                                >
                                                     <MessageSquare className={cn("w-4 h-4 shrink-0 transition-colors", isActive ? "text-primary" : "text-muted-foreground/70")} />
-
                                                     {!collapsed && (
-                                                        <div className="flex-1 min-w-0 pr-8"> {/* Padding to avoid overlap with menu button */}
-                                                            {isEditing ? (
-                                                                <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
-                                                                    <Input
-                                                                        value={editTitle}
-                                                                        onChange={(e) => setEditTitle(e.target.value)}
-                                                                        className="h-6 text-xs px-1 py-0 bg-background"
-                                                                        autoFocus
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                        onKeyDown={(e) => {
-                                                                            if (e.key === 'Enter') handleSaveRename(e);
-                                                                            if (e.key === 'Escape') handleCancelRename(e);
-                                                                        }}
-                                                                    />
-                                                                    <div className="flex shrink-0">
-                                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={handleSaveRename}>
-                                                                            <Check className="w-3 h-3" />
-                                                                        </Button>
-                                                                        <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-500/10" onClick={handleCancelRename}>
-                                                                            <X className="w-3 h-3" />
-                                                                        </Button>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <>
-                                                                    <p className={cn(
-                                                                        "text-sm font-medium truncate",
-                                                                        isActive ? "text-foreground" : "text-foreground/80 group-hover/item:text-foreground"
-                                                                    )}>
-                                                                        {conv.title || conv.agents?.name || "Conversa"}
-                                                                    </p>
-                                                                    <p className="text-[10px] text-muted-foreground/60 truncate group-hover/item:text-accent/80 transition-colors">
-                                                                        {conv.agents?.name}
-                                                                    </p>
-                                                                </>
-                                                            )}
+                                                        <div className="flex-1 min-w-0 pr-8 flex items-center gap-1">
+                                                            <Input
+                                                                value={editTitle}
+                                                                onChange={(e) => setEditTitle(e.target.value)}
+                                                                className="h-6 text-xs px-1 py-0 bg-background"
+                                                                autoFocus
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === 'Enter') handleSaveRename(e);
+                                                                    if (e.key === 'Escape') handleCancelRename(e);
+                                                                }}
+                                                            />
+                                                            <div className="flex shrink-0">
+                                                                <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-green-500 hover:text-green-600 hover:bg-green-500/10" onClick={handleSaveRename}>
+                                                                    <Check className="w-3 h-3" />
+                                                                </Button>
+                                                                <Button type="button" size="icon" variant="ghost" className="h-6 w-6 text-red-500 hover:text-red-600 hover:bg-red-500/10" onClick={handleCancelRename}>
+                                                                    <X className="w-3 h-3" />
+                                                                </Button>
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
-                                            </Link>
+                                            ) : (
+                                                <Link
+                                                    href={`/dashboard/chat/${conv.agent_id}?conversation=${conv.id}`}
+                                                    className={cn(
+                                                        "flex items-center gap-3 px-3 py-3 rounded-xl transition-all relative overflow-hidden",
+                                                        "hover:bg-accent/5 hover:border-accent/10 border border-transparent",
+                                                        isActive ? "bg-primary/10 border-primary/20 text-primary shadow-sm" : "text-muted-foreground",
+                                                        collapsed && "justify-center"
+                                                    )}
+                                                >
+                                                    {/* Active Indicator Background */}
+                                                    {isActive && (
+                                                        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50 z-0" />
+                                                    )}
 
-                                            {/* Menu Button - Always visible if Active or Hovered (on desktop) - On mobile taps might not show hover immediately but we make it always clickable if visible */}
+                                                    <div className="relative z-10 flex items-center gap-3 w-full">
+                                                        <MessageSquare className={cn("w-4 h-4 shrink-0 transition-colors", isActive ? "text-primary" : "text-muted-foreground/70")} />
+
+                                                        {!collapsed && (
+                                                            <div className="flex-1 min-w-0 pr-8">
+                                                                <p className={cn(
+                                                                    "text-sm font-medium truncate",
+                                                                    isActive ? "text-foreground" : "text-foreground/80 group-hover/item:text-foreground"
+                                                                )}>
+                                                                    {conv.title || conv.agents?.name || "Conversa"}
+                                                                </p>
+                                                                <p className="text-[10px] text-muted-foreground/60 truncate group-hover/item:text-accent/80 transition-colors">
+                                                                    {conv.agents?.name}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </Link>
+                                            )}
+
+                                            {/* Menu Button - Always visible if Active or Hovered (on desktop) */}
                                             {!collapsed && !isEditing && (
                                                 <div className={cn(
                                                     "absolute right-2 top-1/2 -translate-y-1/2 z-20 transition-opacity",
-                                                    isMenuOpen ? "opacity-100" : "opacity-0 group-hover/item:opacity-100 mobile:opacity-100" // mobile prefix not standard, just relying on group-hover/click behavior. 
-                                                    // To support mobile better, we can make it always visible or visible when active
+                                                    isMenuOpen ? "opacity-100" : "opacity-0 group-hover/item:opacity-100 mobile:opacity-100"
                                                 )}>
-                                                    {/* Explicitly using type="button" and high z-index */}
                                                     <Button
                                                         type="button"
                                                         size="icon"
