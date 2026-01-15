@@ -21,7 +21,7 @@ export default async function CreditsPage() {
   const { data: packages } = await supabase
     .from("credit_packages")
     .select("*")
-    .eq("active", true)
+    .eq("is_active", true)
     .order("price", { ascending: true })
 
   return (

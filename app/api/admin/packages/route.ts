@@ -44,6 +44,7 @@ export async function POST(request: Request) {
                 name: p.name,
                 amount: parseInt(p.amount),
                 price: parseFloat(p.price),
+                is_active: true
             }))
         )
 
